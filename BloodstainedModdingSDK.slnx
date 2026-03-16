@@ -1,0 +1,7 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="BloodstainedModdingSDK/BloodstainedModdingSDK.vcxproj" Id="3ac52c4c-8063-4bd2-a754-09db5fc7db3b" />
+</Solution>

@@ -5,30 +5,96 @@
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
-    </Filter>
     <Filter Include="Resource Files">
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Other Files">
+    <Filter Include="Source Files\GameSDK">
       <UniqueIdentifier>{c57df698-55bb-4afb-9a70-e90c6c6fdc44}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Mod">
+      <UniqueIdentifier>{faaeeca3-e5aa-4f5c-b76f-2980f7de528e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Mod\Sources">
+      <UniqueIdentifier>{56fb577c-2221-46fb-9a2a-6f1533b33c4f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Mod\Headers">
+      <UniqueIdentifier>{757a712d-9f63-44f3-8572-234c55d2077c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\version">
+      <UniqueIdentifier>{277b7ffb-fed3-4a63-a81a-411962771681}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\libdetour">
+      <UniqueIdentifier>{fe75d117-0db4-4ca5-b5a7-38a74d223842}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\GameSDK\Sources">
+      <UniqueIdentifier>{0bc9de53-7a97-4670-8fe8-52e24c13b172}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\GameSDK\Headers">
+      <UniqueIdentifier>{a5d9ff95-8b1f-4ed1-918f-fb34cc1375b3}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CppSDK\SDK\CoreUObject_functions.cpp">
-      <Filter>Other Files</Filter>
+    <ClCompile Include="extern\libdetour\libdetour.c">
+      <Filter>Source Files\libdetour</Filter>
     </ClCompile>
-    <ClCompile Include="CppSDK\SDK\Engine_functions.cpp">
-      <Filter>Other Files</Filter>
+    <ClCompile Include="Mod\Logger.cpp">
+      <Filter>Source Files\Mod\Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Mod\HookManager.cpp">
+      <Filter>Source Files\Mod\Sources</Filter>
     </ClCompile>
     <ClCompile Include="CppSDK\SDK\Basic.cpp">
-      <Filter>Other Files</Filter>
+      <Filter>Source Files\GameSDK\Sources</Filter>
     </ClCompile>
+    <ClCompile Include="CppSDK\SDK\CoreUObject_functions.cpp">
+      <Filter>Source Files\GameSDK\Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="CppSDK\SDK\Engine_functions.cpp">
+      <Filter>Source Files\GameSDK\Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="CppSDK\SDK\ProjectBlood_functions.cpp">
+      <Filter>Source Files\GameSDK\Sources</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="version\version.h">
+      <Filter>Source Files\version</Filter>
+    </ClInclude>
+    <ClInclude Include="extern\libdetour\libdetour.h">
+      <Filter>Source Files\libdetour</Filter>
+    </ClInclude>
+    <ClInclude Include="Mod\HookManager.h">
+      <Filter>Source Files\Mod\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Mod\Logger.h">
+      <Filter>Source Files\Mod\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="CppSDK\SDK\Basic.hpp">
+      <Filter>Source Files\GameSDK\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="CppSDK\SDK\Engine_classes.hpp">
+      <Filter>Source Files\GameSDK\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="CppSDK\SDK\Engine_parameters.hpp">
+      <Filter>Source Files\GameSDK\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="CppSDK\SDK\Engine_structs.hpp">
+      <Filter>Source Files\GameSDK\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="CppSDK\SDK.hpp">
+      <Filter>Source Files\GameSDK\Headers</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="version\version.def">
+      <Filter>Source Files\version</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Notes.txt" />
   </ItemGroup>
 </Project>

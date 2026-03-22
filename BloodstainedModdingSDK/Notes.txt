@@ -1,0 +1,23 @@
+After getting Player Pawn
+
+Shard Methods to look into:
+APBBaseCharacter::CLIENT_GiveDroppedShard(class FName ShardId)
+void APBBaseCharacter::CrystallizeDead(class FName DropShardId, const struct FVector& DropShardLocation)
+class FName APBBaseCharacter::GetCurrentShard(EShardType Type)
+
+Could be used to make Custom Shard potentially
+TArray<class APBBulletActor*> APBBaseCharacter::ExecuteShard(class FName SocketName, EBulletDirection Type, EShardType stype, const struct FVector& Offset)
+
+PlayerController -> Pawn
+// Player Components
+ -> CharacterStatus: CharacterStatusComponent
+ -> CharacterInventory: PBCharacterInventoryComponent
+ -> PlayerState
+    -> bGodMode: bool // Sets god mode on player
+ -> CharacterParameters: 
+
+
+// Search Labels for UE4SS
+
+// Player In Game
+Chr_P0000_C /Game/Core/System/GameWorld.GameWorld:PersistentLevel.Chr_P0000_C_0

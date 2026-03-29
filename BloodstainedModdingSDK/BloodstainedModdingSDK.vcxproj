@@ -163,18 +163,11 @@
     </ClCompile>
     <ClCompile Include="Mod\HookManager.cpp" />
     <ClCompile Include="Mod\Logger.cpp" />
-    <ClCompile Include="Mod\NotifyObject.h" />
-    <ClCompile Include="Mod\Archipelago.h" />
     <ClCompile Include="Mod\Archipelago.cpp" />
-    <ClCompile Include="Mod\GameManager.h" />
     <ClCompile Include="Mod\GameManager.cpp" />
-    <ClCompile Include="Mod\Gui.h" />
     <ClCompile Include="Mod\Gui.cpp" />
-    <ClCompile Include="Mod\ModRunner.h" />
     <ClCompile Include="Mod\ModRunner.cpp" />
-    <ClCompile Include="Mod\IToggleMod.h" />
     <ClCompile Include="Mod\IToggleMod.cpp" />
-    <ClCompile Include="Mod\ToggleMods.h" />
     <ClCompile Include="Mod\ToggleMods.cpp" />
     <ClCompile Include="extern\imgui\imgui.cpp" />
     <ClCompile Include="extern\imgui\imgui_demo.cpp" />

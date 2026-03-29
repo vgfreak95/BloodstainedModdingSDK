@@ -33,6 +33,10 @@
     <Filter Include="Source Files\GameSDK\Headers">
       <UniqueIdentifier>{a5d9ff95-8b1f-4ed1-918f-fb34cc1375b3}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\minhook"></Filter>
+    <Filter Include="Source Files\imgui"></Filter>
+    <Filter Include="Source Files\Archipelago"></Filter>
+    <Filter Include="Source Files\kiero"></Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -71,6 +75,24 @@
       <Filter>Source Files\Mod\Headers</Filter>
     </ClInclude>
     <ClInclude Include="Mod\Logger.h">
+      <Filter>Source Files\Mod\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Mod\GameManager.h">
+      <Filter>Source Files\Mod\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Mod\Gui.h">
+      <Filter>Source Files\Mod\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Mod\IToggleMod.h">
+      <Filter>Source Files\Mod\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Mod\ModRunner.h">
+      <Filter>Source Files\Mod\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Mod\NotifyObject.h">
+      <Filter>Source Files\Mod\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Mod\ToggleMods.h">
       <Filter>Source Files\Mod\Headers</Filter>
     </ClInclude>
     <ClInclude Include="CppSDK\SDK\Basic.hpp">

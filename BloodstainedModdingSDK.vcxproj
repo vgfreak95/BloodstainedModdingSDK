@@ -117,7 +117,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <AdditionalIncludeDirectories>CppSDK/SDK;.;CppSDK;extern;extern/minhook/include;extern/minhook/src;extern/imgui;extern/imgui/backends;extern/kiero;extern/json</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>CppSDK/SDK;.;CppSDK;extern;extern/libdetour;extern/imgui;extern/imgui/backends;;extern/kiero;extern/minhook/include;extern/minhook/src</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -137,7 +137,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>CppSDK;.;CppSDK/SDK;extern;extern/minhook/include;extern/minhook/src;extern/imgui;extern/imgui/backends;extern/kiero;extern/json</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>CppSDK/SDK;.;CppSDK;extern;extern/libdetour;extern/imgui;extern/imgui/backends;;extern/kiero;extern/minhook/include;extern/minhook/src</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -153,30 +153,31 @@
     <ClCompile Include="CppSDK\SDK\CoreUObject_functions.cpp" />
     <ClCompile Include="CppSDK\SDK\Engine_functions.cpp" />
     <ClCompile Include="CppSDK\SDK\ProjectBlood_functions.cpp" />
-    <ClCompile Include="extern\minhook\src\buffer.c" />
-    <ClCompile Include="extern\minhook\src\hook.c" />
-    <ClCompile Include="extern\minhook\src\trampoline.c" />
-    <ClCompile Include="extern\minhook\src\hde\hde32.c" />
-    <ClCompile Include="extern\minhook\src\hde\hde64.c" />
-    <ClCompile Include="Main.cpp">
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CppSDK/SDK;CppSDK;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-    </ClCompile>
-    <ClCompile Include="Mod\HookManager.cpp" />
-    <ClCompile Include="Mod\Logger.cpp" />
-    <ClCompile Include="Mod\Archipelago.cpp" />
-    <ClCompile Include="Mod\GameManager.cpp" />
-    <ClCompile Include="Mod\Gui.cpp" />
-    <ClCompile Include="Mod\ModRunner.cpp" />
-    <ClCompile Include="Mod\IToggleMod.cpp" />
-    <ClCompile Include="Mod\ToggleMods.cpp" />
+    <ClCompile Include="extern\imgui\backends\imgui_impl_dx11.cpp" />
+    <ClCompile Include="extern\imgui\backends\imgui_impl_win32.cpp" />
     <ClCompile Include="extern\imgui\imgui.cpp" />
     <ClCompile Include="extern\imgui\imgui_demo.cpp" />
     <ClCompile Include="extern\imgui\imgui_draw.cpp" />
     <ClCompile Include="extern\imgui\imgui_tables.cpp" />
     <ClCompile Include="extern\imgui\imgui_widgets.cpp" />
-    <ClCompile Include="extern\imgui\backends\imgui_impl_dx11.cpp" />
-    <ClCompile Include="extern\imgui\backends\imgui_impl_win32.cpp" />
     <ClCompile Include="extern\kiero\kiero.cpp" />
+    <ClCompile Include="extern\libdetour\libdetour.c" />
+    <ClCompile Include="extern\minhook\src\buffer.c" />
+    <ClCompile Include="extern\minhook\src\hde\hde32.c" />
+    <ClCompile Include="extern\minhook\src\hde\hde64.c" />
+    <ClCompile Include="extern\minhook\src\hook.c" />
+    <ClCompile Include="extern\minhook\src\trampoline.c" />
+    <ClCompile Include="Main.cpp">
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CppSDK/SDK;CppSDK;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <ClCompile Include="Mod\Archipelago.cpp" />
+    <ClCompile Include="Mod\GameManager.cpp" />
+    <ClCompile Include="Mod\Gui.cpp" />
+    <ClCompile Include="Mod\HookManager.cpp" />
+    <ClCompile Include="Mod\IToggleMod.cpp" />
+    <ClCompile Include="Mod\Logger.cpp" />
+    <ClCompile Include="Mod\ModRunner.cpp" />
+    <ClCompile Include="Mod\ToggleMods.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CppSDK\SDK.hpp" />
@@ -184,15 +185,32 @@
     <ClInclude Include="CppSDK\SDK\Engine_classes.hpp" />
     <ClInclude Include="CppSDK\SDK\Engine_parameters.hpp" />
     <ClInclude Include="CppSDK\SDK\Engine_structs.hpp" />
+    <ClInclude Include="extern\imgui\backends\imgui_impl_dx11.h" />
+    <ClInclude Include="extern\imgui\backends\imgui_impl_win32.h" />
+    <ClInclude Include="extern\imgui\imconfig.h" />
+    <ClInclude Include="extern\imgui\imgui.h" />
+    <ClInclude Include="extern\imgui\imgui_internal.h" />
+    <ClInclude Include="extern\imgui\imstb_rectpack.h" />
+    <ClInclude Include="extern\imgui\imstb_textedit.h" />
+    <ClInclude Include="extern\imgui\imstb_truetype.h" />
+    <ClInclude Include="extern\kiero\kiero.h" />
+    <ClInclude Include="extern\libdetour\libdetour.h" />
     <ClInclude Include="extern\minhook\include\MinHook.h" />
-    <ClInclude Include="Mod\HookManager.h" />
-    <ClInclude Include="Mod\Logger.h" />
-    <ClInclude Include="Mod\NotifyObject.h" />
+    <ClInclude Include="extern\minhook\src\buffer.h" />
+    <ClInclude Include="extern\minhook\src\hde\hde32.h" />
+    <ClInclude Include="extern\minhook\src\hde\hde64.h" />
+    <ClInclude Include="extern\minhook\src\hde\pstdint.h" />
+    <ClInclude Include="extern\minhook\src\hde\table32.h" />
+    <ClInclude Include="extern\minhook\src\hde\table64.h" />
+    <ClInclude Include="extern\minhook\src\trampoline.h" />
     <ClInclude Include="Mod\Archipelago.h" />
     <ClInclude Include="Mod\GameManager.h" />
     <ClInclude Include="Mod\Gui.h" />
-    <ClInclude Include="Mod\ModRunner.h" />
+    <ClInclude Include="Mod\HookManager.h" />
     <ClInclude Include="Mod\IToggleMod.h" />
+    <ClInclude Include="Mod\Logger.h" />
+    <ClInclude Include="Mod\ModRunner.h" />
+    <ClInclude Include="Mod\NotifyObject.h" />
     <ClInclude Include="Mod\ToggleMods.h" />
     <ClInclude Include="version\version.h" />
   </ItemGroup>

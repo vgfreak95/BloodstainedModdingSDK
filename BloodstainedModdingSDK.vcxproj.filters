@@ -1,0 +1,244 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Source Files\GameSDK">
+      <UniqueIdentifier>{c57df698-55bb-4afb-9a70-e90c6c6fdc44}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Mod">
+      <UniqueIdentifier>{faaeeca3-e5aa-4f5c-b76f-2980f7de528e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Mod\Sources">
+      <UniqueIdentifier>{56fb577c-2221-46fb-9a2a-6f1533b33c4f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Mod\Headers">
+      <UniqueIdentifier>{757a712d-9f63-44f3-8572-234c55d2077c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\version">
+      <UniqueIdentifier>{277b7ffb-fed3-4a63-a81a-411962771681}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\GameSDK\Sources">
+      <UniqueIdentifier>{0bc9de53-7a97-4670-8fe8-52e24c13b172}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\GameSDK\Headers">
+      <UniqueIdentifier>{a5d9ff95-8b1f-4ed1-918f-fb34cc1375b3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="extern">
+      <UniqueIdentifier>{771b4ba1-dad9-432a-91b4-9480941c02b7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="extern\libdetour">
+      <UniqueIdentifier>{fe75d117-0db4-4ca5-b5a7-38a74d223842}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="extern\imgui">
+      <UniqueIdentifier>{af0b2e6d-24c8-429d-a1f3-b5bac429eafd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="extern\kiero">
+      <UniqueIdentifier>{ca3be2a5-19d6-4f17-a0c5-b7d24664e45b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="extern\minhook">
+      <UniqueIdentifier>{336fe98e-c07c-4dd8-90ad-5010ad0000ec}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Archipelago">
+      <UniqueIdentifier>{9e114bbd-dbe9-42ab-ac00-6be8e47b4201}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="extern\libdetour\libdetour.c">
+      <Filter>extern\libdetour</Filter>
+    </ClCompile>
+    <ClCompile Include="Mod\Logger.cpp">
+      <Filter>Source Files\Mod\Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Mod\HookManager.cpp">
+      <Filter>Source Files\Mod\Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="CppSDK\SDK\Basic.cpp">
+      <Filter>Source Files\GameSDK\Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="CppSDK\SDK\CoreUObject_functions.cpp">
+      <Filter>Source Files\GameSDK\Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="CppSDK\SDK\Engine_functions.cpp">
+      <Filter>Source Files\GameSDK\Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="CppSDK\SDK\ProjectBlood_functions.cpp">
+      <Filter>Source Files\GameSDK\Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Mod\GameManager.cpp">
+      <Filter>Source Files\Mod\Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Mod\Gui.cpp">
+      <Filter>Source Files\Mod\Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Mod\IToggleMod.cpp">
+      <Filter>Source Files\Mod\Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Mod\ModRunner.cpp">
+      <Filter>Source Files\Mod\Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Mod\ToggleMods.cpp">
+      <Filter>Source Files\Mod\Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="extern\imgui\imgui.cpp">
+      <Filter>extern\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="extern\imgui\imgui_demo.cpp">
+      <Filter>extern\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="extern\imgui\imgui_draw.cpp">
+      <Filter>extern\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="extern\imgui\backends\imgui_impl_dx11.cpp">
+      <Filter>extern\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="extern\imgui\backends\imgui_impl_win32.cpp">
+      <Filter>extern\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="extern\imgui\imgui_tables.cpp">
+      <Filter>extern\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="extern\imgui\imgui_widgets.cpp">
+      <Filter>extern\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="extern\kiero\kiero.cpp">
+      <Filter>extern\kiero</Filter>
+    </ClCompile>
+    <ClCompile Include="extern\minhook\src\hook.c">
+      <Filter>extern\minhook</Filter>
+    </ClCompile>
+    <ClCompile Include="extern\minhook\src\trampoline.c">
+      <Filter>extern\minhook</Filter>
+    </ClCompile>
+    <ClCompile Include="extern\minhook\src\buffer.c">
+      <Filter>extern\minhook</Filter>
+    </ClCompile>
+    <ClCompile Include="extern\minhook\src\hde\hde32.c">
+      <Filter>extern\minhook</Filter>
+    </ClCompile>
+    <ClCompile Include="extern\minhook\src\hde\hde64.c">
+      <Filter>extern\minhook</Filter>
+    </ClCompile>
+    <ClCompile Include="Mod\Archipelago.cpp">
+      <Filter>Source Files\Archipelago</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="version\version.h">
+      <Filter>Source Files\version</Filter>
+    </ClInclude>
+    <ClInclude Include="extern\libdetour\libdetour.h">
+      <Filter>extern\libdetour</Filter>
+    </ClInclude>
+    <ClInclude Include="Mod\HookManager.h">
+      <Filter>Source Files\Mod\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Mod\Logger.h">
+      <Filter>Source Files\Mod\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="CppSDK\SDK\Basic.hpp">
+      <Filter>Source Files\GameSDK\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="CppSDK\SDK\Engine_classes.hpp">
+      <Filter>Source Files\GameSDK\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="CppSDK\SDK\Engine_parameters.hpp">
+      <Filter>Source Files\GameSDK\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="CppSDK\SDK\Engine_structs.hpp">
+      <Filter>Source Files\GameSDK\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="CppSDK\SDK.hpp">
+      <Filter>Source Files\GameSDK\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Mod\GameManager.h">
+      <Filter>Source Files\Mod\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Mod\Gui.h">
+      <Filter>Source Files\Mod\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Mod\NotifyObject.h">
+      <Filter>Source Files\Mod\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Mod\ToggleMods.h">
+      <Filter>Source Files\Mod\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Mod\IToggleMod.h">
+      <Filter>Source Files\Mod\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Mod\ModRunner.h">
+      <Filter>Source Files\Mod\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="extern\imgui\imconfig.h">
+      <Filter>extern\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="extern\imgui\imgui.h">
+      <Filter>extern\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="extern\imgui\backends\imgui_impl_dx11.h">
+      <Filter>extern\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="extern\imgui\backends\imgui_impl_win32.h">
+      <Filter>extern\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="extern\imgui\imgui_internal.h">
+      <Filter>extern\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="extern\imgui\imstb_rectpack.h">
+      <Filter>extern\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="extern\imgui\imstb_textedit.h">
+      <Filter>extern\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="extern\imgui\imstb_truetype.h">
+      <Filter>extern\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="extern\kiero\kiero.h">
+      <Filter>extern\kiero</Filter>
+    </ClInclude>
+    <ClInclude Include="extern\minhook\src\buffer.h">
+      <Filter>extern\minhook</Filter>
+    </ClInclude>
+    <ClInclude Include="extern\minhook\src\trampoline.h">
+      <Filter>extern\minhook</Filter>
+    </ClInclude>
+    <ClInclude Include="extern\minhook\src\hde\hde64.h">
+      <Filter>extern\minhook</Filter>
+    </ClInclude>
+    <ClInclude Include="extern\minhook\src\hde\pstdint.h">
+      <Filter>extern\minhook</Filter>
+    </ClInclude>
+    <ClInclude Include="extern\minhook\src\hde\table32.h">
+      <Filter>extern\minhook</Filter>
+    </ClInclude>
+    <ClInclude Include="extern\minhook\src\hde\table64.h">
+      <Filter>extern\minhook</Filter>
+    </ClInclude>
+    <ClInclude Include="extern\minhook\src\hde\hde32.h">
+      <Filter>extern\minhook</Filter>
+    </ClInclude>
+    <ClInclude Include="extern\minhook\include\MinHook.h">
+      <Filter>extern\minhook</Filter>
+    </ClInclude>
+    <ClInclude Include="Mod\Archipelago.h">
+      <Filter>Source Files\Archipelago</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="version\version.def">
+      <Filter>Source Files\version</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Notes.txt" />
+  </ItemGroup>
+</Project>

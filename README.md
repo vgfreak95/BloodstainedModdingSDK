@@ -1,1 +1,29 @@
 # BloodstainedModdingSDK
+
+The BloodstainedModdingSDK is an SDK (Source Development Kit) which allows Developers to start Modding Bloodstained.
+In the future, the project will be forked, and converted into an Archipelago. Given all tests are run on Steam version, there are no guarantees
+the SDK will function on other platforms.
+
+## Installation:
+1. Go to Releases, and grab the latest `.dll` file and drag into your games Shipping directory. On Steam that's `steamapps\common\Bloodstained Ritual of the Night\BloodstainedRotN\Binaries\Win64`
+2. Launch the Game, and press F2 to open the ImGui window in game. Explore the Gui to your hearts content and add more custom inside `Mod\Gui.cpp`.
+
+## Building from Source:
+
+### Prerequisites:
+- Visual Studio version that supports .slnx
+- MSBuild tools v145
+
+### Building:
+1. Clone/Download the `main` branch of the repository. `main` will always have the latest functional code.
+2. Open the `BloodstainedModdingSDK.vcxproj` and modify the `<BSGamePath>` sections to match your Games target destination.
+3. There are 2 Configurations available, use Debug x64 (should be default), then in Visual Studio, at the top Build -> Build Solution.
+4. If there are any errors check FAQ section.
+5. Check the `BSGamePath` location, and ensure `version.dll` was populated.
+6. Launch the Game, and press F2 to open the ImGui window in game. Explore the Gui to your hearts content and add more custom inside Mod\Gui.cpp.
+
+## Contributing:
+Fork the main repository, and make a PR. I haven't made a thorough enough system, and don't believe it will get to that point.
+
+## Shoutouts:
+- Trexounay: For building EnderMagnolia Randomizer, its architecture is used as a foundation for this project.

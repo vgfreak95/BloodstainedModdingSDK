@@ -1,0 +1,42 @@
+[
+  {
+    "directory": "C:/Users/VGFreak/source/repos/BloodstainedModdingSDK/BloodstainedModdingSDK",
+    "file": "CppSDK/SDK/Basic.cpp",
+    "arguments": ["cl", "/c", "/EHsc", "/std:c++20", "/D_DEBUG", "/D_CONSOLE", "/ICppSDK/SDK", "/I.", "/ICppSDK", "/Iextern", "/FoCppSDK/SDK/Basic.obj", "CppSDK/SDK/Basic.cpp"]
+  },
+  {
+    "directory": "C:/Users/VGFreak/source/repos/BloodstainedModdingSDK/BloodstainedModdingSDK",
+    "file": "CppSDK/SDK/CoreUObject_functions.cpp",
+    "arguments": ["cl", "/c", "/EHsc", "/std:c++20", "/D_DEBUG", "/D_CONSOLE", "/ICppSDK/SDK", "/I.", "/ICppSDK", "/Iextern", "/FoCppSDK/SDK/CoreUObject_functions.obj", "CppSDK/SDK/CoreUObject_functions.cpp"]
+  },
+  {
+    "directory": "C:/Users/VGFreak/source/repos/BloodstainedModdingSDK/BloodstainedModdingSDK",
+    "file": "CppSDK/SDK/Engine_functions.cpp",
+    "arguments": ["cl", "/c", "/EHsc", "/std:c++20", "/D_DEBUG", "/D_CONSOLE", "/ICppSDK/SDK", "/I.", "/ICppSDK", "/Iextern", "/FoCppSDK/SDK/Engine_functions.obj", "CppSDK/SDK/Engine_functions.cpp"]
+  },
+  {
+    "directory": "C:/Users/VGFreak/source/repos/BloodstainedModdingSDK/BloodstainedModdingSDK",
+    "file": "CppSDK/SDK/ProjectBlood_functions.cpp",
+    "arguments": ["cl", "/c", "/EHsc", "/std:c++20", "/D_DEBUG", "/D_CONSOLE", "/ICppSDK/SDK", "/I.", "/ICppSDK", "/Iextern", "/FoCppSDK/SDK/ProjectBlood_functions.obj", "CppSDK/SDK/ProjectBlood_functions.cpp"]
+  },
+  {
+    "directory": "C:/Users/VGFreak/source/repos/BloodstainedModdingSDK/BloodstainedModdingSDK",
+    "file": "extern/libdetour/libdetour.c",
+    "arguments": ["cl", "/c", "/D_DEBUG", "/D_CONSOLE", "/ICppSDK/SDK", "/I.", "/ICppSDK", "/Iextern", "/Foextern/libdetour/libdetour.obj", "extern/libdetour/libdetour.c"]
+  },
+  {
+    "directory": "C:/Users/VGFreak/source/repos/BloodstainedModdingSDK/BloodstainedModdingSDK",
+    "file": "Main.cpp",
+    "arguments": ["cl", "/c", "/EHsc", "/std:c++20", "/D_DEBUG", "/D_CONSOLE", "/ICppSDK/SDK", "/I.", "/ICppSDK", "/Iextern", "/FoMain.obj", "Main.cpp"]
+  },
+  {
+    "directory": "C:/Users/VGFreak/source/repos/BloodstainedModdingSDK/BloodstainedModdingSDK",
+    "file": "Mod/HookManager.cpp",
+    "arguments": ["cl", "/c", "/EHsc", "/std:c++20", "/D_DEBUG", "/D_CONSOLE", "/ICppSDK/SDK", "/I.", "/ICppSDK", "/Iextern", "/FoMod/HookManager.obj", "Mod/HookManager.cpp"]
+  },
+  {
+    "directory": "C:/Users/VGFreak/source/repos/BloodstainedModdingSDK/BloodstainedModdingSDK",
+    "file": "Mod/Logger.cpp",
+    "arguments": ["cl", "/c", "/EHsc", "/std:c++20", "/D_DEBUG", "/D_CONSOLE", "/ICppSDK/SDK", "/I.", "/ICppSDK", "/Iextern", "/FoMod/Logger.obj", "Mod/Logger.cpp"]
+  }
+]

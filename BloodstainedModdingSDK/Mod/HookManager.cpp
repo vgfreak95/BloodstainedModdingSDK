@@ -1,159 +1,82 @@
 #include "HookManager.h"
+#include "CoreUObject_classes.hpp"
 #include "Logger.h"
+#include "GameManager.h"
 
-#define PLAYER_NAME "Chr_P0000_C_0"
-
-// Static member
-std::unordered_map<void*, detour_ctx_t> HookManager::ctxs;
-
-HookManager& HookManager::Instance()
-{
-	static HookManager instance;
-	return instance;
-}
+std::set<std::string> HookManager::pendingWidgets;
+std::set<std::string> HookManager::processedWidgets;
+void(*HookManager::originalProcessEvent)(SDK::UObject*, SDK::UFunction*, void*) = nullptr;
+bool HookManager::playerDetected = false;
 
 bool HookManager::Init()
 {
-	// Can't find Game Information without the Engine and the World
-	SDK::UEngine* engine = SDK::UEngine::GetEngine();
-	if (!engine)
-	{
-		Logger::Log(LogLevel::Warning, this, "waiting for UEngine");
-		return false;
-	}
+    MH_Initialize();
+    
+    void* processEventPtr = (void*)(SDK::InSDKUtils::GetImageBase() + SDK::Offsets::ProcessEvent);
+    if (!processEventPtr)
+    {
+        Logger::Log(LogLevel::Error, "Failed to get ProcessEvent address");
+        return false;
+    }
 
-	auto world = SDK::UWorld::GetWorld();
-	if (!world || !world->OwningGameInstance || !world->OwningGameInstance->LocalPlayers.Num() || !world->OwningGameInstance->LocalPlayers[0]->PlayerController)
-	{
-		Logger::Log(LogLevel::Warning, this, "waiting for UWorld");
-		return false;
-	}
+    MH_STATUS status = MH_CreateHook(processEventPtr, &HOOKED_ProcessEvent, (void**)&originalProcessEvent);
+    if (status != MH_OK)
+    {
+        Logger::Log(LogLevel::Error, "MH_CreateHook failed: ", (int)status);
+        return false;
+    }
 
-	SDK::UGameInstance* pbGameInstance = SDK::UGameplayStatics::GetGameInstance(world);
+    status = MH_EnableHook(processEventPtr);
+    if (status != MH_OK)
+    {
+        Logger::Log(LogLevel::Error, "MH_EnableHook failed: ", (int)status);
+        return false;
+    }
 
-	auto playerController = (SDK::APBPlayerController*)(pbGameInstance->LocalPlayers[0]->PlayerController);
-	auto pawn = (SDK::APBCPlayerBase*)(playerController->Pawn);
+    NotifyOnClassFunction("PBPlayerController", "ClientRestart", [](void* obj) {
+      Logger::Log("Found player!");
+      GameManager::Instance().ClientRestart();
+    });
 
-	// Wait for the player to load in
-	std::string playerName = pawn->GetName(); // Initially TitlePawn
-	if (playerName != PLAYER_NAME) {
-		playerName = pawn->GetName();
-		Logger::Log(LogLevel::Warning, this, "waiting for player to start a file / game...");
-		return false;
-	}
-
-	// PB_Chr_PlayerRoot_C
-	auto character = (SDK::APB_Chr_PlayerRoot_C*)(pawn);
-	auto characterInventory = character->CharacterInventory;
-	auto charParams = character->CharacterParamaters;
-
-	// Modifying Character Parameters (STR, LUC, CON etc)
-	charParams.STR = 10000.0f;
-	charParams.LUC = 10000.0f;
-
-	// Setting Movement Speed and Back Step Speed, Check EPBEquipSpecialAttribute for more information
-	characterInventory->SetSpecialAttribute(SDK::EPBEquipSpecialAttribute::NormalMoveUpRate, 1000.0f);
-	characterInventory->SetSpecialAttribute(SDK::EPBEquipSpecialAttribute::BackStepRate, 1000.0f);
-
-	auto playerState = (SDK::APBPlayerState*)character->PlayerState;
-	
-	// Fun God mode
-	Logger::Log("Turning on God Mode...");
-	playerState->bGodMode = true;
-
-
-
-	// SetLaunchGameIntent
-	// if (!HookNativeFunction(SDK::UGameInstance::StaticClass()))
-	//if (!HookNativeFunction(SDK::UGameInstanceZion::StaticClass(), "GameInstanceZion", "SetLaunchGameIntent", &HookManager::SetLaunchGameIntent_Hook))
-		//Logger::Log(LogLevel::Error, this, "Failed to hook SetLaunchIntent");
-
-	// tick
-//	if (!HookNativeFunction(SDK::UActorComponent::StaticClass(), "ActorComponent", "ReceiveTick", &HookManager::DEBUG_Hook))
-//		Logger::Log(LogLevel::Error, this, "Failed to hook tick");
-
-	/*s
-	for (int i = 0; i < SDK::UObject::GObjects->Num(); ++i)
-	{
-		SDK::UObject* Object = SDK::UObject::GObjects->GetByIndex(i);
-
-		if (!Object)
-			continue;
-
-		if (Object->HasTypeFlag(SDK::EClassCastFlags::Function) && Object->GetName() == "ReceiveTick")
-		{
-			Logger::Log(LogLevel::Error, this, "FUNC: ", Object->GetFullName());
-		}
-	}
-	for (const SDK::UStruct* Clss = SDK::APlayerController::StaticClass(); Clss; Clss = Clss->Super)
-	{
-		for (SDK::UField* Field = Clss->Children; Field; Field = Field->Next)
-		{
-			if (Field->HasTypeFlag(SDK::EClassCastFlags::Function))
-				Logger::Log(LogLevel::Error, this, Clss->GetName(), "." , Field->GetName());
-		}
-	}*/
-
-	// Enable Hooks
-	Logger::Log(this, "Init ok");
-	return true;
+    Logger::Log("HookManager initialized successfully");
+    return true;
 }
 
-//bool HookManager::HookNativeFunction(const SDK::UClass *defaultClass, const std::string className, const std::string funcName, FNativeFuncPtr detour)
-//{
-//	if (!defaultClass)
-//	{
-//		Logger::Log(LogLevel::Error, this, "no default class");
-//		return false;
-//	}
-//	auto Func = defaultClass->GetFunction(className, funcName);
-//	if (!Func || !Func->ExecFunction)
-//	{
-//		Logger::Log(LogLevel::Error, this, "no function", className, ".", funcName);
-//		return false;
-//	}
-//	this->ctxs[detour] = detour_ctx_t();
-//	detour_init(&this->ctxs[detour], Func->ExecFunction, detour);
-//	return detour_enable(&this->ctxs[detour]);
-//}
-//
-//bool HookManager::HookProcessEvent(FProcessEventFuncPtr detour)
-//{
-//	void* origPtr = reinterpret_cast<void*>(SDK::InSDKUtils::GetImageBase() + SDK::Offsets::ProcessEvent);
-//	if (!origPtr)
-//	{
-//		Logger::Log(LogLevel::Error, this, "Failed to get original ProcessEvent function");
-//		return false;
-//	}
-//	this->ctxs[detour] = detour_ctx_t();
-//	detour_init(&this->ctxs[detour], origPtr, detour);
-//	return detour_enable(&this->ctxs[detour]);
-//}
-//
-//void HookManager::ProcessEvent(const SDK::UObject* obj, SDK::UFunction* func, void* params)
-//{
-//	static Subscriber PlayerCameraManager_ReceiveTick("CameraAnimationCameraModifier", "BlueprintModifyCamera");
-//	if (PlayerCameraManager_ReceiveTick.Matches(obj, func))
-//		GameManager::Instance().OnReceiveTick();
-//}
-//
-//void HookManager::SetLaunchGameIntent(SDK::UObject* Context, void* TheStack, void* Result)
-//{
-//	GameManager::Instance().OnGameStarted();
-//}
-
-inline bool HookManager::Subscriber::Matches(const SDK::UObject* obj, const SDK::UFunction* func)
+bool HookManager::PostInit()
 {
-	if (!obj || !func) return false;
-	if (_objFName.ComparisonIndex != 0 && _funcFName.ComparisonIndex != 0)
-	{
-		return obj->Class->Name == _objFName && func->Name == _funcFName;
-	}
-	auto match = objName == obj->Class->Name.ToString() && funcName == func->Name.GetRawString();
-	if (match)
-	{
-		_objFName = obj->Class->Name;
-		_funcFName = func->Name;
-	}
-	return match;
+    NotifyOnClassFunction("ItemGetPopup_C", "Construct", [](void* obj) {
+        auto* uobj = static_cast<SDK::UObject*>(obj);
+        auto name = uobj->GetName();
+        pendingWidgets.insert(name);
+    });
+
+    NotifyOnClassFunction("ItemGetPopup_C", "Tick", [](void* obj) {
+        auto* uobj = static_cast<SDK::UObject*>(obj);
+        auto name = uobj->GetName();
+
+        if (pendingWidgets.find(name) == pendingWidgets.end())
+            return;
+
+        auto* popup = static_cast<SDK::UItemGetPopup_C*>(obj);
+        if (popup->MLTF_SIZE_23_ItemName && popup->MLTF_SIZE_23_ItemName->text.TextData)
+        {
+            pendingWidgets.erase(name);
+            processedWidgets.insert(name);
+            Logger::Log("[ItemGetPopup] Item: ", popup->MLTF_SIZE_23_ItemName->text.ToString());
+        }
+    });
+
+    // NotifyOnClassFunction("APBBronzeTreasureBox_BP_C", "OnChestOpened", [](void* obj) {
+    //     auto* chest = static_cast<SDK::APBBronzeTreasureBox_BP_C*>(obj);
+    //     Logger::Log("[ChestOpened] DropItemID: ", chest->DropItemID.ToString());
+    // });
+    //
+    // NotifyOnClassFunction("APBGoldenTreasureBox_BP_C", "OnChestOpened", [](void* obj) {
+    //     auto* chest = static_cast<SDK::APBGoldenTreasureBox_BP_C*>(obj);
+    //     Logger::Log("[ChestOpened] DropItemID: ", chest->DropItemID.ToString());
+    // });
+    //
+
+    Logger::Log("HookManager post initialized successfully");
+    return true;
 }

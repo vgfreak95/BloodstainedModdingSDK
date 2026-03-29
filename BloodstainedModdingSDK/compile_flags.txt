@@ -1,0 +1,9 @@
+-I CppSDK/SDK
+-I .
+-I CppSDK
+-I extern
+-I extern/imgui
+-I extern/imgui/backends
+-I extern/kiero
+-I extern/minhook/include
+-I extern/minhook/src

@@ -1,0 +1,37 @@
+3/23/2026
+
+
+3/24/2026
+
+
+3/25/2026 Offstream
+Accomplishments:
+- Hooked UE DX11 Graphics to Render ImGUI
+- Played around with ImGUI Examples to get more understanding
+- Added simple buttons to register output to logger
+
+Challenges:
+- Getting the fucking window to render mainly...
+
+
+3/27/2026 Onstream
+Accomplishments:
+- Created Toggleable Interface and implementation / rendering for ImGUI (components stay uniform)
+- Created a toggleable for player stats system so easily create toggleables
+
+Offstream (since I'm too fucking stubborn at 1am)
+- Created a system that allows item pickups to be logged... FINALLY.
+
+Challenges:
+- The Initalize() function on UItemGetPickup_C is not a default function (known for days) which means NativeHooking doesn't work.
+- Solution: Use the Tick() function on UItemGetPickup_C under the ProcessEvent loop and log the item. Use a set for storing items so that
+  when process event triggers again it won't interact with the same item.
+
+
+3/28/2026
+Woke up and got to work early at 7am. Only to find out my system didn't fucking work LMAOOO. Took 3 hours but I identified
+a tried and true system now.
+
+Challenges:
+Since the original system on 3/27/2026 removed duplicate items, this meant that once the items objectName+key were in there, it wouldn't work again. UItemGetPickup_C has 6 instances initialized at gametime (fucking stupid I know). This is how they allow overlapping widgets when you collect multiple items... yeah great system. Anyway, this meant that once the duplicates where full I was fucked. Instead I spent hours refactoring, trying to access VTables on these objects, everything. The main issue is this, ProcessEvent runs the following functions: OnPreConstruct -> Construct -> Tick <-> OnEventPressed, where Tick and OnEventPressed are constantly getting called while the widget is displayed. Well, I checked on Construct 2 nights ago, and it gives uninitialized data, which isn't useful... but what if I waited until it was?! Then like that I integrated a system and it fucking works. That was my main challenge, but now we need to have a ItemPickupManager of some description and then have that contain a dependency injected Client, but we will worry about that later. Its the small victories that make a massive victory.
+

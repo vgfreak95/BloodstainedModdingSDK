@@ -28,3 +28,4 @@ Fork the main repository, and make a PR. I haven't made a thorough enough system
 ## Shoutouts:
 - Trexounay: For building EnderMagnolia Randomizer, its architecture is used as a foundation for this project.
 - Lakifume: For building the Bloodstained TrueRandomizer, will be a huge help for research 
+- Tourmi: For creating an Baseline APWorld, various modding repositories and attempting this themselves. Their Archipelago foundation will help jumpstart the Archipelago portion of this project.

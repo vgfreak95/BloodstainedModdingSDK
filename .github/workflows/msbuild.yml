@@ -13,32 +13,12 @@ jobs:
     env:
       SOLUTION_FILE_PATH: .
       BUILD_CONFIGURATION: Debug
-      VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}\vcpkg-binary-cache
+      # VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}\vcpkg-binary-cache
+      VCPKG_DEFAULT_BINARY_CACHE: .\vcpkg_installed
 
     steps:
-      # ── 1. Submodule cache ────────────────────────────────────────────────
-      # Cache the .git/modules directory so submodule clone traffic is skipped.
-      # Key includes the recorded submodule SHAs so a submodule bump busts it.
-      - name: Get submodule SHAs for cache key
-        id: submods
-        shell: bash
-        run: |
-          echo "sha=$(git ls-remote --heads origin | sort | sha256sum | cut -c1-16)" >> "$GITHUB_OUTPUT"
-
-      - name: Restore submodule cache
-        id: submodule-cache
-        uses: actions/cache@v4
-        with:
-          path: .git/modules
-          key: submodules-${{ hashFiles('.gitmodules') }}-${{ github.sha }}
-          restore-keys: |
-            submodules-${{ hashFiles('.gitmodules') }}-
-
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          submodules: recursive
-          fetch-depth: 0
 
       - name: Create vcpkg binary cache directory
         run: New-Item -ItemType Directory -Force "$env:VCPKG_DEFAULT_BINARY_CACHE"
@@ -49,12 +29,16 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
-          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json') }}
+          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
           restore-keys: |
             vcpkg-${{ runner.os }}-
 
       - name: Add MSBuild to PATH
         uses: microsoft/setup-msbuild@v2
+
+      - name: Create vcpkg baseline
+        run: vcpkg x-update-baseline --add-initial-baseline
+        shell: pwsh
 
       - name: Install dependencies via vcpkg
         run: vcpkg install --triplet x64-windows-release
@@ -74,7 +58,6 @@ jobs:
           msbuild BloodstainedModdingSDK.vcxproj
           /p:Configuration=${{ env.BUILD_CONFIGURATION }}
           /p:Platform=x64
-          /p:VcpkgAdditionalInstallRoot=${{ github.workspace }}\vcpkg
           /m
         shell: pwsh
 

@@ -13,7 +13,6 @@ jobs:
     env:
       SOLUTION_FILE_PATH: .
       BUILD_CONFIGURATION: Debug
-      VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}\vcpkg-binary-cache
 
     steps:
       - name: Checkout repository

@@ -1,0 +1,73 @@
+name: MSBuild
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [ "main", "release/*" ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    env:
+      SOLUTION_FILE_PATH: .
+      BUILD_CONFIGURATION: Debug
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Checkout subprojects submodules only
+        run: git submodule update --init subprojects
+      
+      - name: Restore vcpkg installed libraries
+        id: vcpkg-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            vcpkg_installed\x64-windows-release\lib
+            vcpkg_installed\x64-windows-release\include
+          key: vcpkg-installed-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
+          restore-keys: |
+            vcpkg-installed-${{ runner.os }}-
+
+      - name: Create vcpkg baseline
+        if: steps.vcpkg-cache.outputs.cache-hit != 'true'
+        run: vcpkg x-update-baseline --add-initial-baseline
+        shell: pwsh
+
+      - name: Install dependences via vcpkg
+        if: steps.vcpkg-cache.outputs.cache-hit != 'true'
+        run: vcpkg install --triplet x64-windows-release
+        shell: pwsh
+
+      - name: Add MSBuild to PATH
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Set BSGamePath in project file
+        shell: pwsh
+        run: |
+          $proj = "BloodstainedModdingSDK.vcxproj"
+          (Get-Content $proj) `
+            -replace '<BSGamePath>.*?</BSGamePath>', "<BSGamePath>${{ env.SOLUTION_FILE_PATH }}</BSGamePath>" |
+            Set-Content $proj
+
+      - name: Build solution (Debug x64)
+        run: >
+          msbuild BloodstainedModdingSDK.vcxproj
+          /p:Configuration=${{ env.BUILD_CONFIGURATION }}
+          /p:Platform=x64
+          /m
+        shell: pwsh
+
+      # ── 6. Upload artifact ────────────────────────────────────────────────
+      # - name: Upload build artifact
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: BloodstainedModdingSDK-Debug-x64
+      #     path: |
+      #       x64\Debug\*.dll
+      #       x64\Debug\*.pdb
+      #     if-no-files-found: error
+

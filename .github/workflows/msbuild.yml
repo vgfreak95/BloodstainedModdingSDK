@@ -20,33 +20,32 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Checkout subprojects submodules only
-        run: git submodule update --init subprojects/
-
-      - name: Create vcpkg binary cache directory
-        run: New-Item -ItemType Directory -Force "$env:VCPKG_DEFAULT_BINARY_CACHE"
-        shell: pwsh
-
-      - name: Restore vcpkg binary cache
+        run: git submodule update --init subprojects
+      
+      - name: Restore vcpkg installed libraries
         id: vcpkg-cache
         uses: actions/cache@v4
         with:
-          path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
-          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
+          path: |
+            vcpkg_installed\x64-windows-release\lib
+            vcpkg_installed\x64-windows-release\include
+          key: vcpkg-installed-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
           restore-keys: |
-            vcpkg-${{ runner.os }}-
+            vcpkg-installed-${{ runner.os }}-
+
+      - name: Create vcpkg baseline
+        if: steps.vcpkg-cache.outputs.cache-hit != 'true'
+        run: vcpkg x-update-baseline --add-initial-baseline
+        shell: pwsh
+
+      - name: Install dependences via vcpkg
+        if: steps.vcpkg-cache.outputs.cache-hit != 'true'
+        run: vcpkg install --triplet x64-windows-release
+        shell: pwsh
 
       - name: Add MSBuild to PATH
         uses: microsoft/setup-msbuild@v2
 
-      - name: Create vcpkg baseline
-        run: vcpkg x-update-baseline --add-initial-baseline
-        shell: pwsh
-
-      - name: Install dependencies via vcpkg
-        run: vcpkg install --triplet x64-windows-release
-        shell: pwsh
-
-      # ── 5. Patch BSGamePath & build ───────────────────────────────────────
       - name: Set BSGamePath in project file
         shell: pwsh
         run: |

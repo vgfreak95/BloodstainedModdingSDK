@@ -1,5 +1,8 @@
-# BloodstainedModdingSDK
+[![CI](https://github.com/vgfreak95/BloodstainedModdingSDK/actions/workflows/msbuild.yml/badge.svg)](https://github.com/vgfreak95/BloodstainedModdingSDK/actions/workflows/msbuild.yml)
+[![License](https://img.shields.io/github/license/vgfreak95/BloodstainedModdingSDK)](LICENSE)
+[![Last Commit](https://img.shields.io/github/last-commit/vgfreak95/BloodstainedModdingSDK)](https://github.com/vgfreak95/BloodstainedModdingSDK/commits/main)
 
+# BloodstainedModdingSDK
 The BloodstainedModdingSDK is an SDK (Source Development Kit) which allows Developers to start Modding Bloodstained.
 In the future, the project will be forked, and converted into an Archipelago. Given all tests are run on Steam version, there are no guarantees
 the SDK will function on other platforms.

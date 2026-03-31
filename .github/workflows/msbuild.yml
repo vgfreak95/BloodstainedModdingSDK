@@ -19,6 +19,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Checkout subprojects submodules only
+        run: git submodule update --init subprojects/
+
       - name: Create vcpkg binary cache directory
         run: New-Item -ItemType Directory -Force "$env:VCPKG_DEFAULT_BINARY_CACHE"
         shell: pwsh

@@ -77,6 +77,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <BSGamePath>C:\SteamLibrary\steamapps\common\Bloodstained Ritual of the Night\BloodstainedRotN\Binaries\Win64</BSGamePath>
     <TargetName>version</TargetName>
+    <ExternalIncludePath>CppSDK;CppSDK/SDK;subprojects;$(ExternalIncludePath)</ExternalIncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <BSGamePath>C:\SteamLibrary\steamapps\common\Bloodstained Ritual of the Night\BloodstainedRotN\Binaries\Win64</BSGamePath>
@@ -117,15 +118,16 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;ASIO_STANDALONE;_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR;_WEBSOCKETPP_CPP11_THREAD;ASIO_NO_WIN32_LEAN_AND_MEAN;_WIN32_WINNT=0x0600;WIN32_LEAN_AND_MEAN;NOMINMAX;WSWRAP_SEND_EXCEPTIONS;AP_NO_SCHEMA;APCLIENT_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>CppSDK/SDK;subprojects/json/include;subprojects/valijson/include;subprojects/wswrap/include;subprojects/websocketpp;subprojects/asio/asio/include;subprojects/asio/include;subprojects/apclientpp;.;CppSDK;extern;extern/libdetour;extern/imgui;extern/imgui/backends;extern/kiero;extern/minhook/include;extern/minhook/src;C:\Users\VGFreak\Downloads\vcpkg\packages\openssl_x64-windows\include;C:\Users\VGFreak\Downloads\vcpkg\packages\zlib_x64-windows\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>CppSDK/SDK;subprojects/json/include;subprojects/valijson/include;subprojects/wswrap/include;subprojects/websocketpp;subprojects/asio/asio/include;subprojects/asio/include;subprojects/apclientpp;.;CppSDK;extern;extern/libdetour;extern/imgui;extern/imgui/backends;extern/kiero;extern/minhook/include;extern/minhook/src;vcpkg_installed\x64-windows-release\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/Zc:__cplusplus /bigobj %(AdditionalOptions)</AdditionalOptions>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ModuleDefinitionFile>version\version.def</ModuleDefinitionFile>
-      <AdditionalLibraryDirectories>vcpkg_installed\x64-windows\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vcpkg_installed\x64-windows\lib\libcrypto.lib;vcpkg_installed\x64-windows\lib\libssl.lib;vcpkg_installed\x64-windows\lib\zlib.lib;crypt32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>vcpkg_installed\x64-windows-release\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vcpkg_installed\x64-windows-release\lib\libcrypto.lib;vcpkg_installed\x64-windows-release\lib\libssl.lib;vcpkg_installed\x64-windows-release\lib\zlib.lib;crypt32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>xcopy /Y /F "$(TargetPath)" "$(BSGamePath)\"</Command>

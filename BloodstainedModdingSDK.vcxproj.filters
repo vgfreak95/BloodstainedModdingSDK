@@ -48,6 +48,21 @@
     <Filter Include="Source Files\Archipelago">
       <UniqueIdentifier>{9e114bbd-dbe9-42ab-ac00-6be8e47b4201}</UniqueIdentifier>
     </Filter>
+    <Filter Include="extern\apclientpp">
+      <UniqueIdentifier>{c1920231-5868-4a98-af57-5f8a8925a046}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="extern\json">
+      <UniqueIdentifier>{6679d251-c9f8-4c1f-ab2c-28ae54dd867c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="extern\wswrap">
+      <UniqueIdentifier>{5b297e47-e827-42a0-9ecc-0393bc2e9ca0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="extern\asio">
+      <UniqueIdentifier>{f24d942a-c7c3-4977-b3d0-d7abda30aeda}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="extern\websocketpp">
+      <UniqueIdentifier>{e02580a8-87ef-4946-81c1-48c150154d78}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">

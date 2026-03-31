@@ -15,16 +15,19 @@ the SDK will function on other platforms.
 - MSBuild tools v145
 
 ### Building:
-1. Clone/Download the `main` branch of the repository. `main` will always have the latest functional code.
-2. Open the `BloodstainedModdingSDK.vcxproj` and modify the `<BSGamePath>` sections to match your Games target destination.
-3. There are 2 Configurations available, use Debug x64 (should be default), then in Visual Studio, at the top Build -> Build Solution.
-4. If there are any errors check FAQ section.
-5. Check the `BSGamePath` location, and ensure `version.dll` was populated.
-6. Launch the Game, and press F2 to open the ImGui window in game. Explore the Gui to your hearts content and add more custom inside Mod\Gui.cpp.
+1. Clone/Download the `main` branch of the repository. `main` will always be stable latest functional code.
+2. Open a VS Administrator Terminal, and `cd` into the project root directory/folder.
+3. Run `vcpkg install` to install openssl and zlib. The packages are defined in `vcpkg.json` in project root directory/folder.
+4. Open the `BloodstainedModdingSDK.vcxproj` and modify the `<BSGamePath>` sections to match your Games target destination.
+5. There are 2 Configurations available (Release WIP), use Debug x64 (should be default), then in Visual Studio, at the top Build -> Build Solution.
+6. If there are any errors check FAQ section (WIP).
+7. Check the `BSGamePath` location, and ensure `version.dll` was populated.
+8. Launch the Game, and press F2 to open the ImGui window in game. Explore the Gui to your hearts content and add more custom inside Mod\Gui.cpp.
 
 ## Contributing:
 Fork the main repository, and make a PR. I haven't made a thorough enough system, and don't believe it will get to that point.
 
 ## Shoutouts:
 - Trexounay: For building EnderMagnolia Randomizer, its architecture is used as a foundation for this project.
-- Lakifume: For building the Bloodstained TrueRandomizer, will be a huge help for research 
+- Lakifume: For building the Bloodstained TrueRandomizer, will be a huge help for research
+- Tourmi: For creating an Baseline APWorld, various modding repositories and attempting this themselves. Their Archipelago foundation will help jumpstart the Archipelago portion of this project.

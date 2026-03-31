@@ -21,3 +21,55 @@ PlayerController -> Pawn
 
 // Player In Game
 Chr_P0000_C /Game/Core/System/GameWorld.GameWorld:PersistentLevel.Chr_P0000_C_0
+
+
+
+// Notes for todays stream
+Non submodules: valijson, json, openssl
+Add submodules of apclientpp, asio, websocketpp, wswrap
+Get a basic archipelago connection setup and functioning
+
+## Getting APClientPP Functioning in Visual Studio 2026 Project with vcpkg
+
+### Prerequisites Tools for Configuration:
+- Visual Studio 2026
+- MSVC: v145 for Microsoft C++ Build Tools
+- C++ STD20
+- vcpkg: Accessible with Elevated VS Shell
+- git
+
+### Preprocessor Definitions: 
+`ASIO_STANDALONE _DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR _WEBSOCKETPP_CPP11_THREAD ASIO_NO_WIN32_LEAN_AND_MEAN _WIN32_WINNT=0x0600 WIN32_LEAN_AND_MEAN NOMINMAX WSWRAP_SEND_EXCEPTIONS AP_NO_SCHEMA APCLIENT_DEBUG`
+(Duplicates are made during build time apparently, so use as needed)
+
+### Without SSL support:
+Add each dependency, valijson, json, websocketpp, asio, and apclientpp as a git submodule in the project
+Inside the asio root directory, use `git checkout 03ae834ed` to get asio. 1.32.0. Testing shows asio 1.32.0 still functions with websocketpp
+
+### With SSL support: vcpkg was used. Ensure the "Without SSL Support" section has been completed before continuing.
+In the root of project with sln, or slnx, create `vcpkg.json` with this configuration: 
+{
+  "dependencies": [
+    "openssl",
+    "zlib"
+  ]
+}
+
+### Using VCPKG as package manager
+For vcpkg to allow installations, a "baseline" uuid is required. Enter `vcpkg x-update-baseline --add-initial-baseline` 
+If an error occurs from `vcpkg` about "No baseline found", please use the above step as its required.
+
+### Linking Additional Dependences:
+Go to Project Properties -> Linker -> Input -> Additional Dependencies
+
+Add the following lines:
+vcpkg\installed\x64-windows\lib\libcrypto.lib
+vcpkg\installed\x64-windows\lib\libssl.lib
+crypt32.lib
+
+Windows SDK has crypt32 already, so just add `crypt32.lib`
+
+Includes are same as README.md from apclientpp
+
+
+

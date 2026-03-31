@@ -1,0 +1,33 @@
+[submodule "extern/asio"]
+	path = extern/asio
+	url = https://github.com/chriskohlhoff/asio
+[submodule "extern/websocketpp"]
+	path = extern/websocketpp
+	url = https://github.com/zaphoyd/websocketpp.git
+[submodule "extern/wsrap"]
+	path = extern/wsrap
+	url = https://github.com/black-sliver/wswrap.git
+[submodule "extern/apclientpp"]
+	path = extern/apclientpp
+	url = https://github.com/black-sliver/apclientpp.git
+[submodule "extern/wswrap"]
+	path = extern/wswrap
+	url = https://github.com/black-sliver/wswrap.git
+[submodule "subprojects/wswrap"]
+	path = subprojects/wswrap
+	url = https://github.com/black-sliver/wswrap.git
+[submodule "subprojects/json"]
+	path = subprojects/json
+	url = https://github.com/nlohmann/json.git
+[submodule "subprojects/valijson"]
+	path = subprojects/valijson
+	url = https://github.com/tristanpenman/valijson.git
+[submodule "subprojects/websocketpp"]
+	path = subprojects/websocketpp
+	url = https://github.com/zaphoyd/websocketpp.git
+[submodule "subprojects/apclientpp"]
+	path = subprojects/apclientpp
+	url = https://github.com/black-sliver/apclientpp.git
+[submodule "subprojects/asio"]
+	path = subprojects/asio
+	url = https://github.com/chriskohlhoff/asio.git

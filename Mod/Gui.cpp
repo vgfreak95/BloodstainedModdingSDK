@@ -40,9 +40,19 @@ static void RenderArchipelagoPanel()
 
         if (ImGui::Button("Connect"))
         {
-            int port = atoi(s_Port);
-            archipelago.Connect(s_Host, port, s_SlotName, s_Password);
-            s_Connected = true;
+			#ifdef _DEBUG
+			std::string uri = std::string("ws://") + s_Host + ":" + s_Port;
+			#else
+            std::string uri = std::string("wss://") + s_Host + ":" + s_Port;
+			#endif
+
+			if (s_SlotName[0] != '\0') {
+				archipelago.Connect(s_SlotName, s_Password, uri);
+				s_Connected = true;
+			}
+			else {
+				Logger::Log("Cannot connect to Archipelago with empty slotName");
+			}
         }
     }
     else
@@ -53,9 +63,11 @@ static void RenderArchipelagoPanel()
             archipelago.GetState() == ArchipelagoConnectionState::Connecting ? "Connecting..." :
             archipelago.GetState() == ArchipelagoConnectionState::Disconnected ? "Disconnected" :
             "Error");
+        archipelago.Poll();
 
         if (ImGui::Button("Disconnect"))
         {
+			Logger::Log("Disconnecting from archipelago");
             archipelago.Disconnect();
             s_Connected = false;
         }

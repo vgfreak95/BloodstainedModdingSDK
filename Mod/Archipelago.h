@@ -32,7 +32,7 @@ public:
     Archipelago();
     ~Archipelago();
 
-    void Connect(const std::string& host, int port, const std::string& slotName, const std::string& password);
+    void Connect(const std::string& slotName, const std::string& password, std::string uri);
     void Disconnect();
     void Poll();
     
@@ -50,11 +50,19 @@ public:
     void SetErrorCallback(ErrorCallback callback) { onError_ = callback; }
 
 private:
+    void AbortPassword();
+    void ConnectSlot();
     void UpdateState(ArchipelagoConnectionState newState);
 
     ArchipelagoConnectionState state_;
     std::string slotName_;
+    std::string password_;
     std::string lastError_;
+    std::string currentUri_;
+    double retryTimer_;
+    double retryInterval_;
+    int maxRetries_;
+    int retryCount_;
 
     ConnectedCallback onConnected_;
     DisconnectedCallback onDisconnected_;

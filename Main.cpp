@@ -14,7 +14,6 @@
 #include "Mod/GameManager.h"
 #include "Mod/Gui.h"
 #include "Mod/ModRunner.h"
-
 #include "kiero.h"
 
 long __stdcall HookedPresent(IDXGISwapChain* swapChain, unsigned int syncInterval, unsigned int flags);

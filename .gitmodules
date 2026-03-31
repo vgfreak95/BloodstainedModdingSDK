@@ -1,18 +1,3 @@
-[submodule "extern/asio"]
-	path = extern/asio
-	url = https://github.com/chriskohlhoff/asio
-[submodule "extern/websocketpp"]
-	path = extern/websocketpp
-	url = https://github.com/zaphoyd/websocketpp.git
-[submodule "extern/wsrap"]
-	path = extern/wsrap
-	url = https://github.com/black-sliver/wswrap.git
-[submodule "extern/apclientpp"]
-	path = extern/apclientpp
-	url = https://github.com/black-sliver/apclientpp.git
-[submodule "extern/wswrap"]
-	path = extern/wswrap
-	url = https://github.com/black-sliver/wswrap.git
 [submodule "subprojects/wswrap"]
 	path = subprojects/wswrap
 	url = https://github.com/black-sliver/wswrap.git

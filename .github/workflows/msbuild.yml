@@ -1,50 +1,90 @@
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
-
 name: MSBuild
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [main]
   pull_request:
     branches: [ "main", "release/*" ]
-
-env:
-  # Path to the solution file relative to the root of the project.
-  SOLUTION_FILE_PATH: .
-
-  # Configuration type to build.
-  # You can convert this to a build matrix if you need coverage of multiple configuration types.
-  # https://docs.github.com/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
-  BUILD_CONFIGURATION: Debug
-
-permissions:
-  contents: read
 
 jobs:
   build:
     runs-on: windows-latest
 
+    env:
+      SOLUTION_FILE_PATH: .
+      BUILD_CONFIGURATION: Debug
+      VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}\vcpkg-binary-cache
+
     steps:
-    - uses: actions/checkout@v4
-      with:
-        submodules: recursive
+      # ── 1. Submodule cache ────────────────────────────────────────────────
+      # Cache the .git/modules directory so submodule clone traffic is skipped.
+      # Key includes the recorded submodule SHAs so a submodule bump busts it.
+      - name: Get submodule SHAs for cache key
+        id: submods
+        shell: bash
+        run: |
+          echo "sha=$(git ls-remote --heads origin | sort | sha256sum | cut -c1-16)" >> "$GITHUB_OUTPUT"
 
-    - name: Add MSBuild to PATH
-      uses: microsoft/setup-msbuild@v1.0.2
+      - name: Restore submodule cache
+        id: submodule-cache
+        uses: actions/cache@v4
+        with:
+          path: .git/modules
+          key: submodules-${{ hashFiles('.gitmodules') }}-${{ github.sha }}
+          restore-keys: |
+            submodules-${{ hashFiles('.gitmodules') }}-
 
-    - name: VCPKG Setup
-      working-directory: ${{env.SOLUTION_FILE_PATH}}
-      run: vcpkg x-update-baseline --add-initial-baseline
-      
-    - name: Install OpenSSL Dependencies
-      working-directory: ${{env.SOLUTION_FILE_PATH}}
-      run: vcpkg install
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
 
-    - name: Build
-      working-directory: ${{env.SOLUTION_FILE_PATH}}
-      # Add additional options to the MSBuild command line here (like platform or verbosity level).
-      # See https://docs.microsoft.com/visualstudio/msbuild/msbuild-command-line-reference
-      run: msbuild /m /p:Configuration=${{env.BUILD_CONFIGURATION}} ${{env.SOLUTION_FILE_PATH}}
+      - name: Create vcpkg binary cache directory
+        run: New-Item -ItemType Directory -Force "$env:VCPKG_DEFAULT_BINARY_CACHE"
+        shell: pwsh
+
+      - name: Restore vcpkg binary cache
+        id: vcpkg-cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
+          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json') }}
+          restore-keys: |
+            vcpkg-${{ runner.os }}-
+
+      - name: Add MSBuild to PATH
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Install dependencies via vcpkg
+        run: vcpkg install --triplet x64-windows-release
+        shell: pwsh
+
+      # ── 5. Patch BSGamePath & build ───────────────────────────────────────
+      - name: Set BSGamePath in project file
+        shell: pwsh
+        run: |
+          $proj = "BloodstainedModdingSDK.vcxproj"
+          (Get-Content $proj) `
+            -replace '<BSGamePath>.*?</BSGamePath>', "<BSGamePath>${{ env.SOLUTION_FILE_PATH }}</BSGamePath>" |
+            Set-Content $proj
+
+      - name: Build solution (Debug x64)
+        run: >
+          msbuild BloodstainedModdingSDK.vcxproj
+          /p:Configuration=${{ env.BUILD_CONFIGURATION }}
+          /p:Platform=x64
+          /p:VcpkgAdditionalInstallRoot=${{ github.workspace }}\vcpkg
+          /m
+        shell: pwsh
+
+      # ── 6. Upload artifact ────────────────────────────────────────────────
+      # - name: Upload build artifact
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: BloodstainedModdingSDK-Debug-x64
+      #     path: |
+      #       x64\Debug\*.dll
+      #       x64\Debug\*.pdb
+      #     if-no-files-found: error
+

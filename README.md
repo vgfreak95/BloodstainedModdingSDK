@@ -15,7 +15,7 @@ the SDK will function on other platforms.
 - MSBuild tools v145
 
 ### Building:
-1. Clone/Download the `main` branch of the repository. `main` will always be stable latest functional code.
+1. Clone/Download the `main` branch of the repository with command `git clone --recurse-submodules`. `main` will always be stable latest functional code.
 2. Open a VS Administrator Terminal, and `cd` into the project root directory/folder.
 3. Run `vcpkg install` to install openssl and zlib. The packages are defined in `vcpkg.json` in project root directory/folder.
 4. Open the `BloodstainedModdingSDK.vcxproj` and modify the `<BSGamePath>` sections to match your Games target destination.

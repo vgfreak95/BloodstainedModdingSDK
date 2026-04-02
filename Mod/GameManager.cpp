@@ -49,6 +49,7 @@ bool GameManager::Init()
 bool GameManager::PostInit() {
   if(!GameManager::IsInstanceValid(GameManager::GameInstance(), "GameInstance")) return false;
   if(!GameManager::IsInstanceValid(GameManager::PlayerController(), "PlayerController")) return false;
+  // Access ingame Table
 
 	// Wait for the player to load in
   if(!playerLoaded) return false;

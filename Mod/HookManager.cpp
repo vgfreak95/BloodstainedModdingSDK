@@ -1,7 +1,10 @@
 #include "HookManager.h"
+#include "Basic.hpp"
 #include "CoreUObject_classes.hpp"
+#include "ItemGetPopup_classes.hpp"
 #include "Logger.h"
 #include "GameManager.h"
+#include "ProjectBlood_classes.hpp"
 
 std::set<std::string> HookManager::pendingWidgets;
 std::set<std::string> HookManager::processedWidgets;
@@ -10,6 +13,8 @@ bool HookManager::playerDetected = false;
 
 bool HookManager::Init()
 {
+    SDK::UPBGameInstance instance;
+    SDK::UItemGetPopup_C popup;
     MH_Initialize();
     
     void* processEventPtr = (void*)(SDK::InSDKUtils::GetImageBase() + SDK::Offsets::ProcessEvent);
@@ -33,49 +38,86 @@ bool HookManager::Init()
         return false;
     }
 
+    // NotifyOnClassFunction("ItemGetPopup_C", "Construct", [](void* obj) {
+    //     auto* uobj = static_cast<SDK::UObject*>(obj);
+    //     auto name = uobj->GetName();
+    //     Logger::Log(LogLevel::Debug, "Constructed: ", name);
+    //     pendingWidgets.insert(name);
+    // });
+
     NotifyOnClassFunction("PBPlayerController", "ClientRestart", [](void* obj) {
       Logger::Log("Found player!");
       GameManager::Instance().ClientRestart();
     });
-
-    Logger::Log("HookManager initialized successfully");
-    return true;
+  Logger::Log("HookManager initialized successfully");
+  return true;
 }
 
 bool HookManager::PostInit()
 {
-    NotifyOnClassFunction("ItemGetPopup_C", "Construct", [](void* obj) {
-        auto* uobj = static_cast<SDK::UObject*>(obj);
-        auto name = uobj->GetName();
-        pendingWidgets.insert(name);
-    });
+  NotifyOnClassFunction("PBEasyTreasureBox_BP_C", "BndEvt__PBET_OnInteractBox_K2Node_ComponentBoundEvent_4_PBETDelegate_OnInteract__DelegateSignature", [](void* obj) {
 
-    NotifyOnClassFunction("ItemGetPopup_C", "Tick", [](void* obj) {
-        auto* uobj = static_cast<SDK::UObject*>(obj);
-        auto name = uobj->GetName();
+    SDK::FName* dropItemId = reinterpret_cast<SDK::FName*>(static_cast<uint8_t*>(obj) + 0x6F8);
+    auto roomManager = GameManager::Instance().RoomManager();
+    std::string formatted = dropItemId->ToString() + "." + roomManager->GetCurrentRoomId().ToString();
+    Logger::Log("Pickup up: ", formatted);
+  });
 
-        if (pendingWidgets.find(name) == pendingWidgets.end())
-            return;
+  NotifyOnClassFunction("HPMaxUp_C", "BndEvt__PBET_OnOverlapPCBox_K2Node_ComponentBoundEvent_0_PBETDelegate_OnOverlapPC__DelegateSignature", [](void* obj) {
+    SDK::UObject* uobj = (SDK::UObject*)obj;
+    auto roomManager = GameManager::Instance().RoomManager();
+    std::string formatted = uobj->GetName() + "." + roomManager->GetCurrentRoomId().ToString();
+    Logger::Log("Picked up:", formatted);
 
-        auto* popup = static_cast<SDK::UItemGetPopup_C*>(obj);
-        if (popup->MLTF_SIZE_23_ItemName && popup->MLTF_SIZE_23_ItemName->text.TextData)
-        {
-            pendingWidgets.erase(name);
-            processedWidgets.insert(name);
-            Logger::Log("[ItemGetPopup] Item: ", popup->MLTF_SIZE_23_ItemName->text.ToString());
-        }
-    });
+  });
 
-    // NotifyOnClassFunction("APBBronzeTreasureBox_BP_C", "OnChestOpened", [](void* obj) {
-    //     auto* chest = static_cast<SDK::APBBronzeTreasureBox_BP_C*>(obj);
-    //     Logger::Log("[ChestOpened] DropItemID: ", chest->DropItemID.ToString());
-    // });
-    //
-    // NotifyOnClassFunction("APBGoldenTreasureBox_BP_C", "OnChestOpened", [](void* obj) {
-    //     auto* chest = static_cast<SDK::APBGoldenTreasureBox_BP_C*>(obj);
-    //     Logger::Log("[ChestOpened] DropItemID: ", chest->DropItemID.ToString());
-    // });
-    //
+  NotifyOnClassFunction("MPMaxUp_C", "BndEvt__PBET_OnOverlapPCBox_K2Node_ComponentBoundEvent_0_PBETDelegate_OnOverlapPC__DelegateSignature", [](void* obj) {
+    SDK::UObject* uobj = (SDK::UObject*)obj;
+    auto roomManager = GameManager::Instance().RoomManager();
+    std::string formatted = uobj->GetName() + "." + roomManager->GetCurrentRoomId().ToString();
+    Logger::Log("Picked up:", formatted);
+  });
+
+  NotifyOnClassFunction("BulletMaxUp_C", "BndEvt__PBET_OnOverlapPCBox_K2Node_ComponentBoundEvent_0_PBETDelegate_OnOverlapPC__DelegateSignature", [](void* obj) {
+    SDK::UObject* uobj = (SDK::UObject*)obj;
+    auto roomManager = GameManager::Instance().RoomManager();
+    std::string formatted = uobj->GetName() + "." + roomManager->GetCurrentRoomId().ToString();
+    Logger::Log("Picked up:", formatted);
+  });
+
+  NotifyOnClassFunction("PurpleShard_C", "ReceiveEndPlay", [](void* obj){
+    auto shardBase = reinterpret_cast<SDK::AShardBase*>(obj);
+    std::string shardNameLookup = "SHARD_NAME_" + shardBase->ShardId.ToString();
+    auto shardName = GameManager::Instance().GetLocalizedString(shardNameLookup);
+    Logger::Log("Picked up:", shardName);
+  });
+
+  // Code below I may need in the future :/
+
+  // NotifyOnClassFunction("ItemGetPopup_C", "Contruct", [](void* obj) {
+  //     Logger::Log("Called OnInitialized");
+  //       auto* uobj = static_cast<SDK::UObject*>(obj);
+  //       auto name = uobj->GetFullName();
+  //       pendingWidgets.insert(name);
+  // });
+  //
+  //
+  //   NotifyOnClassFunction("ItemGetPopup_C", "Tick", [](void* obj) {
+  //       auto* uobj = static_cast<SDK::UObject*>(obj);
+  //       auto name = uobj->GetName();
+  //       //Logger::Log("From: ", name);
+  //
+  //       if (pendingWidgets.find(name) == pendingWidgets.end())
+  //           return;
+  //
+  //       auto* popup = static_cast<SDK::UItemGetPopup_C*>(obj);
+  //       if (popup->MLTF_SIZE_23_ItemName && popup->MLTF_SIZE_23_ItemName->text.TextData)
+  //       {
+  //           pendingWidgets.erase(name);
+  //           processedWidgets.insert(name);
+  //           Logger::Log("[ItemGetPopup] Item: ", popup->MLTF_SIZE_23_ItemName->text.ToString());
+  //       }
+  //   });
 
     Logger::Log("HookManager post initialized successfully");
     return true;

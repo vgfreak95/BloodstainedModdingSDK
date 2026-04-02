@@ -185,6 +185,7 @@
     <ClCompile Include="Mod\IToggleMod.cpp" />
     <ClCompile Include="Mod\Logger.cpp" />
     <ClCompile Include="Mod\ModRunner.cpp" />
+    <ClCompile Include="Mod\StringTable.cpp" />
     <ClCompile Include="Mod\ToggleMods.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -219,6 +220,7 @@
     <ClInclude Include="Mod\Logger.h" />
     <ClInclude Include="Mod\ModRunner.h" />
     <ClInclude Include="Mod\NotifyObject.h" />
+    <ClInclude Include="Mod\StringTable.h" />
     <ClInclude Include="Mod\ToggleMods.h" />
     <ClInclude Include="version\version.h" />
   </ItemGroup>

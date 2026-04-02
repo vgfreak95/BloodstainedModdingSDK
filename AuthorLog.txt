@@ -31,3 +31,9 @@ a tried and true system now.
 Challenges:
 Since the original system on 3/27/2026 removed duplicate items, this meant that once the items objectName+key were in there, it wouldn't work again. UItemGetPickup_C has 6 instances initialized at gametime (fucking stupid I know). This is how they allow overlapping widgets when you collect multiple items... yeah great system. Anyway, this meant that once the duplicates where full I was fucked. Instead I spent hours refactoring, trying to access VTables on these objects, everything. The main issue is this, ProcessEvent runs the following functions: OnPreConstruct -> Construct -> Tick <-> OnEventPressed, where Tick and OnEventPressed are constantly getting called while the widget is displayed. Well, I checked on Construct 2 nights ago, and it gives uninitialized data, which isn't useful... but what if I waited until it was?! Then like that I integrated a system and it fucking works. That was my main challenge, but now we need to have a ItemPickupManager of some description and then have that contain a dependency injected Client, but we will worry about that later. Its the small victories that make a massive victory.
 
+4/1/2026
+Haven't written in the log for a few days. So lets catch up. I made a build system CI for github to automatically verify my builds. Yesterday was a day
+full of research. Trying to figure out where things happened, how they happened etc. However, Today was a successful day with not many challenges. I found
+out that we could hook on delegates since they go through ProcessEvent. I now have unique room_id.actor_instance_name as an id to replace for when I recieve
+the seed from Archipelago. The following actors completed: TreasureChests, HPMaxUp, MPMaxUp, BulletMaxUp, Shards (finally). Today was great and exteremly
+successful. I can't wait to suffer tomorrow building the AP World, and then also figuring out the AP Client works... ><

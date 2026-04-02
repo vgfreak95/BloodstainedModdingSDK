@@ -25,9 +25,20 @@ Chr_P0000_C /Game/Core/System/GameWorld.GameWorld:PersistentLevel.Chr_P0000_C_0
 
 
 // Notes for todays stream
-Non submodules: valijson, json, openssl
-Add submodules of apclientpp, asio, websocketpp, wswrap
-Get a basic archipelago connection setup and functioning
+
+Figure out how to access Native CPP Function calls
+Overall Goal: Get a proper callback on the OnChestOpened method
+
+Seed
+chest_id.item_drop
+chest_id2.item_drop
+
+Find out the chest delegate real parent and then match on that function to get the chest
+
+
+
+
+
 
 ## Getting APClientPP Functioning in Visual Studio 2026 Project with vcpkg
 

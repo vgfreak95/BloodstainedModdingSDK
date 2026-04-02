@@ -146,6 +146,9 @@
     <ClCompile Include="Mod\Archipelago.cpp">
       <Filter>Source Files\Archipelago</Filter>
     </ClCompile>
+    <ClCompile Include="Mod\StringTable.cpp">
+      <Filter>Source Files\Mod\Sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="version\version.h">
@@ -246,6 +249,9 @@
     </ClInclude>
     <ClInclude Include="Mod\Archipelago.h">
       <Filter>Source Files\Archipelago</Filter>
+    </ClInclude>
+    <ClInclude Include="Mod\StringTable.h">
+      <Filter>Source Files\Mod\Headers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

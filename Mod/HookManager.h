@@ -5,6 +5,8 @@
 
 #include "ItemGetPopup_classes.hpp"
 #include "Logger.h"
+#include "Mod/APBridge.h"
+#include "Mod/Archipelago.h"
 #include "NotifyObject.h"
 #include "PBBronzeTreasureBox_BP_classes.hpp"
 #include "PBGoldenTreasureBox_BP_classes.hpp"
@@ -64,6 +66,8 @@ class HookManager {
         if (funcName == "ReceiveTick" || funcName == "Tick") {
             ThreadQueue::Instance().Flush();
         }
+        APBridge::Instance().ProcessPending();
+        Archipelago::Instance().Poll();
 
         notifyObject.OnProcessEvent(obj, className, funcName, params);
     }

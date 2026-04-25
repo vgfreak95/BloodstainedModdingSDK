@@ -7,6 +7,7 @@
 #include <PBSaveBox_BP_classes.hpp>
 #include <ProjectBlood_structs.hpp>
 #include <SavedataDetail_classes.hpp>
+#include <UMG_classes.hpp>
 #include <UnrealContainers.hpp>
 
 #include "Basic.hpp"

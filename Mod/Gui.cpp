@@ -1,6 +1,7 @@
 #pragma once
 #include "Gui.h"
 
+#include "APBridge.h"
 #include "Archipelago.h"
 #include "GameManager.h"
 #include "Logger.h"
@@ -32,6 +33,10 @@ static bool s_Connected = false;
 static void RenderArchipelagoPanel() {
     ImGui::SeparatorText("Archipelago");
 
+    if (!Archipelago::Instance().IsConnected()) {
+        s_Connected = false;
+    }
+
     if (!s_Connected) {
         ImGui::Text("Host    ");
         ImGui::SameLine();
@@ -61,12 +66,15 @@ static void RenderArchipelagoPanel() {
 #endif
 
             if (s_SlotName[0] != '\0') {
-                if (Archipelago::Instance().Connect(s_SlotName, s_Password, uri)) {
-                    s_Connected = true;
-                };
+                Logger::Log("Tried to connect to AP");
+                APBridge::Instance().EnqueueConnect(s_SlotName, s_Password, uri);
             } else {
                 Logger::Log("Cannot connect to Archipelago with empty slotName");
             }
+        }
+
+        if (Archipelago::Instance().IsConnected()) {
+            s_Connected = true;
         }
 
         ImGui::Text("Console ");
@@ -90,12 +98,9 @@ static void RenderArchipelagoPanel() {
                     : Archipelago::Instance().GetState() == ArchipelagoConnectionState::Connecting   ? "Connecting..."
                     : Archipelago::Instance().GetState() == ArchipelagoConnectionState::Disconnected ? "Disconnected"
                                                                                                      : "Error");
-        Archipelago::Instance().Poll();
-
         if (ImGui::Button("Disconnect")) {
             Logger::Log("Disconnecting from Archipelago");
-            Archipelago::Instance().Disconnect();
-            s_Connected = false;
+            APBridge::Instance().EnqueueDisconnect();
         }
     }
 

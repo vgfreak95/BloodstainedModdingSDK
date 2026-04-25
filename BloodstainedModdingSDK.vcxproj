@@ -179,13 +179,13 @@
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CppSDK/SDK;CppSDK;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <ClCompile Include="Mod\Archipelago.cpp" />
+    <ClCompile Include="Mod\APBridge.cpp" />
     <ClCompile Include="Mod\GameManager.cpp" />
     <ClCompile Include="Mod\Gui.cpp" />
     <ClCompile Include="Mod\HookManager.cpp" />
     <ClCompile Include="Mod\IToggleMod.cpp" />
     <ClCompile Include="Mod\Logger.cpp" />
     <ClCompile Include="Mod\ModRunner.cpp" />
-    <ClCompile Include="Mod\StringTable.cpp" />
     <ClCompile Include="Mod\ToggleMods.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -213,6 +213,7 @@
     <ClInclude Include="extern\minhook\src\hde\table64.h" />
     <ClInclude Include="extern\minhook\src\trampoline.h" />
     <ClInclude Include="Mod\Archipelago.h" />
+    <ClInclude Include="Mod\APBridge.h" />
     <ClInclude Include="Mod\GameManager.h" />
     <ClInclude Include="Mod\Gui.h" />
     <ClInclude Include="Mod\HookManager.h" />
@@ -220,7 +221,6 @@
     <ClInclude Include="Mod\Logger.h" />
     <ClInclude Include="Mod\ModRunner.h" />
     <ClInclude Include="Mod\NotifyObject.h" />
-    <ClInclude Include="Mod\StringTable.h" />
     <ClInclude Include="Mod\ToggleMods.h" />
     <ClInclude Include="version\version.h" />
   </ItemGroup>

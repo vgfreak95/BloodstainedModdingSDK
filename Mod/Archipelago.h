@@ -7,12 +7,12 @@
 #include <unordered_set>
 
 enum class ArchipelagoConnectionState {
-    Disconnected,
-    Connecting,
-    Connected,
-    SlotConnected,
-    SocketError,
-    ConnectionRefusedError
+    Disconnected = 0,
+    Connecting = 1,
+    Connected = 2,
+    SlotConnected = 3,
+    SocketError = 4,
+    ConnectionRefusedError = 5
 };
 
 class Archipelago {

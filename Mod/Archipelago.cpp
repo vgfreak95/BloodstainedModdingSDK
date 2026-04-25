@@ -143,16 +143,6 @@ int Archipelago::GetFileLastIndex() {
 
 void Archipelago::SetFileLastIndex() {
     int lastFileIndex = GetFileLastIndex();  // from file
-    std::string fileName = "index.txt";
-    std::ofstream indexFile(fileName, std::ios::out | std::ios::trunc);
-    struct stat buf;
-    bool fileExists = stat(fileName.c_str(), &buf) != -1;
-    if (!fileExists) {
-        if (!indexFile.is_open()) {
-            Logger::Log("Index file was created");
-        }
-    }
-
     Logger::Log("Trying to save last index: ", lastFileIndex);
 
     if (lastReceivedItemIndex_ <= lastFileIndex) {
@@ -160,6 +150,7 @@ void Archipelago::SetFileLastIndex() {
         return;
     } else {
         // Overwrite the contents of index.txt with the new index
+        std::ofstream indexFile("index.txt", std::ios::out | std::ios::trunc);
         if (indexFile.is_open()) {
             Logger::Log("Overwriting last index");
             indexFile << lastReceivedItemIndex_ << '\n';

@@ -57,11 +57,11 @@
     <Filter Include="extern\wswrap">
       <UniqueIdentifier>{5b297e47-e827-42a0-9ecc-0393bc2e9ca0}</UniqueIdentifier>
     </Filter>
-    <Filter Include="extern\asio">
-      <UniqueIdentifier>{f24d942a-c7c3-4977-b3d0-d7abda30aeda}</UniqueIdentifier>
-    </Filter>
     <Filter Include="extern\websocketpp">
       <UniqueIdentifier>{e02580a8-87ef-4946-81c1-48c150154d78}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="extern\imgui\asio">
+      <UniqueIdentifier>{f24d942a-c7c3-4977-b3d0-d7abda30aeda}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -146,8 +146,8 @@
     <ClCompile Include="Mod\Archipelago.cpp">
       <Filter>Source Files\Archipelago</Filter>
     </ClCompile>
-    <ClCompile Include="Mod\StringTable.cpp">
-      <Filter>Source Files\Mod\Sources</Filter>
+    <ClCompile Include="Mod\APBridge.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -250,9 +250,7 @@
     <ClInclude Include="Mod\Archipelago.h">
       <Filter>Source Files\Archipelago</Filter>
     </ClInclude>
-    <ClInclude Include="Mod\StringTable.h">
-      <Filter>Source Files\Mod\Headers</Filter>
-    </ClInclude>
+    <ClInclude Include="Mod\APBridge.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="version\version.def">

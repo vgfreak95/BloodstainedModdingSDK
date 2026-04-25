@@ -1,10 +1,7 @@
 #pragma once
 #include <fstream>
-#include <functional>
-#include <list>
 #include <set>
 #include <string>
-#include <unordered_set>
 
 enum class ArchipelagoConnectionState {
     Disconnected = 0,

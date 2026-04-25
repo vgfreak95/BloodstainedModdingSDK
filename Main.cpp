@@ -7,13 +7,10 @@
 #include <iostream>
 #include <thread>
 
-#include "Engine_classes.hpp"
 #include "Mod/GameManager.h"
 #include "Mod/Gui.h"
 #include "Mod/HookManager.h"
 #include "Mod/Logger.h"
-#include "Mod/ModRunner.h"
-#include "imgui.h"
 #include "kiero.h"
 #include "version/version.h"
 
@@ -22,6 +19,19 @@ long __stdcall HookedPresent(IDXGISwapChain* swapChain, unsigned int syncInterva
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 LRESULT __stdcall HookWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+    // Track resize state
+    if (msg == WM_ENTERSIZEMOVE) {
+        Gui::Instance().SetResizing(true);
+    } else if (msg == WM_EXITSIZEMOVE) {
+        Gui::Instance().SetResizing(false);
+    }
+
+    // Let resize/move messages pass through to original handler
+    if (msg == WM_SIZE || msg == WM_MOVE || msg == WM_WINDOWPOSCHANGED ||
+        msg == WM_SIZING || msg == WM_ENTERSIZEMOVE || msg == WM_EXITSIZEMOVE) {
+        return CallWindowProc((WNDPROC)Gui::Instance().GetOriginalWndProc(), hwnd, msg, wParam, lParam);
+    }
+
     if (Gui::Instance().IsOpen() && ImGui_ImplWin32_WndProcHandler(hwnd, msg, wParam, lParam)) {
         return CallWindowProc((WNDPROC)Gui::Instance().GetOriginalWndProc(), hwnd, msg, wParam, lParam);
     }
@@ -57,6 +67,7 @@ void renderGui() {
 
 long __stdcall HookedPresent(IDXGISwapChain* swapChain, unsigned int syncInterval, unsigned int flags) {
     static bool init = false;
+
     if (!init) {
         init = true;
         Gui::Instance().InitImGui(swapChain);
@@ -69,20 +80,22 @@ long __stdcall HookedPresent(IDXGISwapChain* swapChain, unsigned int syncInterva
 }
 
 DWORD APIENTRY MainThread(HMODULE Module) {
-#ifdef _DEBUG
     char dllName[MAX_PATH];
     GetModuleFileNameA(Module, dllName, MAX_PATH);
 
+    #ifdef _DEBUG
     Logger::Init();
+    #endif
     Logger::Log("Starting Bloodstained Fun Mod");
 
-    Gui::Instance().Init();
-
-    if (!InitKieroAndHook()) return 0;
 
     while (!GameManager::Instance().Init()) Sleep(500);
 
     while (!HookManager::Instance().Init()) Sleep(500);
+
+    Gui::Instance().Init();
+
+    if (!InitKieroAndHook()) return 0;
 
     while (!GameManager::Instance().PostInit()) Sleep(500);
 
@@ -93,7 +106,6 @@ DWORD APIENTRY MainThread(HMODULE Module) {
     // Gui::Instance().Shutdown();
     // kiero::shutdown();
 
-#endif
     FreeLibraryAndExitThread(Module, 0);
     return 0;
 }

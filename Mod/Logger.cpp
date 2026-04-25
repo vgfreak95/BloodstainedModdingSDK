@@ -3,8 +3,6 @@
 
 #include <Windows.h>
 
-#include <typeinfo>
-
 void Logger::Init() {
     AllocConsole();
     FILE* fDummy;

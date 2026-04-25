@@ -1,7 +1,13 @@
 {
   "dependencies": [
-    "openssl",
-    "zlib"
+    {
+      "name": "openssl",
+      "platform": "windows"
+    },
+    {
+      "name": "zlib",
+      "platform": "windows"
+    }
   ],
   "builtin-baseline": "65c377b6e1363ceed1bfd4f661c6ea3026c9c110"
 }

@@ -15,12 +15,12 @@ the SDK will function on other platforms.
 
 ### Prerequisites:
 - Visual Studio version that supports .slnx
-- MSBuild tools v145
+- MSBuild tools v143
 
 ### Building:
 1. Clone/Download the `main` branch of the repository with command `git clone --recurse-submodules=subprojects`. `main` will always be stable latest functional code.
 2. Open a VS Administrator Terminal, and `cd` into the project root directory/folder.
-3. Run `vcpkg install --triplet x64-windows-release` to install openssl and zlib. The packages are defined in `vcpkg.json` in project root directory/folder.
+3. Run `vcpkg install --triplet x64-windows-static-md` to install openssl and zlib. The packages are defined in `vcpkg.json` in project root directory/folder.
 4. Open the `BloodstainedModdingSDK.vcxproj` and modify the `<BSGamePath>` sections to match your Games target destination.
 5. There are 2 Configurations available (Release WIP), use Debug x64 (should be default), then in Visual Studio, at the top Build -> Build Solution.
 6. If there are any errors check FAQ section (WIP).

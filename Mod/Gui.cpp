@@ -5,7 +5,6 @@
 #include "Archipelago.h"
 #include "GameManager.h"
 #include "Logger.h"
-#include "ModRunner.h"
 #include "PBBronzeTreasureBox_BP_classes.hpp"
 #include "ProjectBlood_classes.hpp"
 #include "ToggleMods.h"
@@ -77,6 +76,7 @@ static void RenderArchipelagoPanel() {
             s_Connected = true;
         }
 
+        #ifdef _DEBUG
         ImGui::Text("Console ");
         ImGui::SameLine();
         ImGui::SetNextItemWidth(256);
@@ -90,6 +90,7 @@ static void RenderArchipelagoPanel() {
                 Logger::Log("Cannot execute console command with empty command");
             }
         }
+        #endif
 
     } else {
         ImGui::Text("Connected as: %s", s_SlotName);
@@ -197,6 +198,8 @@ bool Gui::InitImGui(IDXGISwapChain* swapChain) {
 }
 
 void Gui::Render() {
+    if (m_IsResizing) return;
+
     // Check for F2 key to toggle menu
     if (GetAsyncKeyState(VK_F2) & 1) {
         m_Open = !m_Open;
@@ -222,6 +225,7 @@ void Gui::Render() {
                 RenderArchipelagoPanel();
                 ImGui::EndTabItem();
             }
+            #ifdef _DEBUG
             if (ImGui::BeginTabItem("Mods")) {
                 // Test toggle button
                 if (GameManager::Instance().IsPlayerLoadedInGame()) {
@@ -238,6 +242,7 @@ void Gui::Render() {
                 RenderDebugInfoPanel();
                 ImGui::EndTabItem();
             }
+            #endif
         }
         ImGui::EndTabBar();
     }

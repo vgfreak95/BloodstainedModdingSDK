@@ -6,7 +6,6 @@
 #include <unordered_set>
 
 #include "Logger.h"
-#include "SDK.hpp"
 
 class NotifyObject {
    public:

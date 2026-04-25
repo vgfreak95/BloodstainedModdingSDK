@@ -1,14 +1,11 @@
 #pragma once
 #include "ModRunner.h"
 
-#include <format>
 
 #include "Bullet_PlayerRoot_classes.hpp"
 #include "Engine_classes.hpp"
 #include "GameManager.h"
-#include "ItemGetPopup_classes.hpp"
 #include "Logger.h"
-#include "PB_Chr_Root_classes.hpp"
 #include "ProjectBlood_classes.hpp"
 #include "SDK.hpp"
 #include "imgui.h"

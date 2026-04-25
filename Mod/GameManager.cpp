@@ -2,19 +2,14 @@
 #include "GameManager.h"
 
 #include <Basic.hpp>
-#include <PBGameInstanceBP_classes.hpp>
 #include <ProjectBlood_classes.hpp>
 #include <ProjectBlood_structs.hpp>
 #include <UnrealContainers.hpp>
 #include <format>
-#include <fstream>
 
-#include "CommonMenuStatus_classes.hpp"
 #include "CoreUObject_classes.hpp"
 #include "Engine_classes.hpp"
-#include "ItemGetPopup_classes.hpp"
 #include "Logger.h"
-#include "SDK.hpp"
 #include "ThreadQueue.h"
 
 #define PLAYER_NAME "Chr_P0000_C_0"

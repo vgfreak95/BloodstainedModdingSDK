@@ -14,6 +14,7 @@ class Gui {
     void ToggleMenu() { m_Open = !m_Open; }
     bool IsOpen() const { return m_Open; }
     bool IsImGuiInit() const { return m_ImGuiInit; }
+    void SetResizing(bool resizing) { m_IsResizing = resizing; }
 
     bool InitImGui(IDXGISwapChain* swapChain);
 
@@ -40,6 +41,7 @@ class Gui {
     bool m_Initialized = false;
     bool m_ImGuiInit = false;
     bool m_Open = false;
+    bool m_IsResizing = false;
 
     WNDPROC m_OriginalWndProc = nullptr;
     HWND m_GameWindow = nullptr;

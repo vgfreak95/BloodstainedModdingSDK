@@ -1,17 +1,12 @@
 #pragma once
-#include <functional>
 #include <set>
-#include <unordered_map>
 
-#include "ItemGetPopup_classes.hpp"
 #include "Logger.h"
 #include "Mod/APBridge.h"
 #include "Mod/Archipelago.h"
 #include "NotifyObject.h"
-#include "PBBronzeTreasureBox_BP_classes.hpp"
-#include "PBGoldenTreasureBox_BP_classes.hpp"
-#include "SDK.hpp"
 #include "ThreadQueue.h"
+#include "SDK.hpp"
 
 extern "C" {
 #include "MinHook.h"

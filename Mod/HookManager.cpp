@@ -2,14 +2,11 @@
 #include "HookManager.h"
 
 #include <Engine_classes.hpp>
-#include <PBBronzeTreasureBox_BP_classes.hpp>
-#include <PBGameInstanceBP_classes.hpp>
-#include <PBSaveBox_BP_classes.hpp>
 #include <ProjectBlood_structs.hpp>
-#include <SavedataDetail_classes.hpp>
 #include <UMG_classes.hpp>
 #include <UnrealContainers.hpp>
 
+#include "SDK.hpp"
 #include "Basic.hpp"
 #include "CoreUObject_classes.hpp"
 #include "GameManager.h"

@@ -1,7 +1,6 @@
 #pragma once
 #include "IToggleMod.h"
-
-#include "Logger.h"
+#include "imgui.h"
 
 void IToggleMod::Init(const char* label) {
     if (ImGui::Checkbox(label, &m_Toggled)) {

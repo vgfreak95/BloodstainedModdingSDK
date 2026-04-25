@@ -53,7 +53,7 @@ jobs:
             -replace '<BSGamePath>.*?</BSGamePath>', "<BSGamePath>${{ env.SOLUTION_FILE_PATH }}</BSGamePath>" |
             Set-Content $proj
 
-      - name: Build solution (Debug x64)
+      - name: Build solution (Release x64)
         run: >
           msbuild BloodstainedModdingSDK.vcxproj
           /p:Configuration=${{ env.BUILD_CONFIGURATION }}
@@ -61,12 +61,14 @@ jobs:
           /m
         shell: pwsh
 
-      # ── 6. Upload artifact ────────────────────────────────────────────────
-      # - name: Upload build artifact
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: BloodstainedModdingSDK-Debug-x64
-      #     path: |
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        if: github.ref == 'refs/heads/main'
+        with:
+          name: BloodstainedModdingSDK-Debug-x64
+          path: |
+            x64\Release\version.dll
+          if-no-files-found: error
       #       x64\Debug\*.dll
       #       x64\Debug\*.pdb
       #     if-no-files-found: error

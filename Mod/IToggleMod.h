@@ -2,7 +2,7 @@
 #include "imgui.h"
 
 class IToggleMod {
-public:
+   public:
     IToggleMod() = default;
     virtual ~IToggleMod() = default;
 
@@ -12,6 +12,6 @@ public:
     virtual void OnActivated() {}
     virtual void OnDeactivated() {}
 
-private:
+   private:
     bool m_Toggled = false;
 };

@@ -1,72 +1,63 @@
 #pragma once
-#include <string>
+#include <fstream>
 #include <functional>
 #include <list>
+#include <set>
+#include <string>
+#include <unordered_set>
 
-enum class ArchipelagoConnectionState
-{
+enum class ArchipelagoConnectionState {
     Disconnected,
     Connecting,
     Connected,
     SlotConnected,
-    Error
+    SocketError,
+    ConnectionRefusedError
 };
 
-struct NetworkItem
-{
-    int64_t item;
-    int64_t location;
-    int64_t player;
-    bool flags;
-};
-
-class Archipelago
-{
-public:
-    using ConnectedCallback = std::function<void()>;
-    using DisconnectedCallback = std::function<void()>;
-    using ItemsReceivedCallback = std::function<void(const std::list<NetworkItem>&)>;
-    using MessageCallback = std::function<void(const std::string&)>;
-    using ErrorCallback = std::function<void(const std::string&)>;
+class Archipelago {
+   public:
+    static Archipelago& Instance();
 
     Archipelago();
     ~Archipelago();
 
-    void Connect(const std::string& slotName, const std::string& password, std::string uri);
+    bool Connect(const std::string& slotName, const std::string& password, std::string uri);
     void Disconnect();
     void Poll();
-    
-    void SendLocationCheck(int64_t locationId);
-    void SendItem(int64_t itemId, int64_t locationId, int64_t playerId);
+    void Sync();
+
+    int GetFileLastIndex();
+    void SetFileLastIndex();
+
+    void SendLocationChecks(const std::string& locationId);
 
     ArchipelagoConnectionState GetState() const { return state_; }
     std::string GetSlotName() const { return slotName_; }
     std::string GetLastError() const { return lastError_; }
+    bool IsConnected() const { return state_ == ArchipelagoConnectionState::SlotConnected; }
 
-    void SetConnectedCallback(ConnectedCallback callback) { onConnected_ = callback; }
-    void SetDisconnectedCallback(DisconnectedCallback callback) { onDisconnected_ = callback; }
-    void SetItemsReceivedCallback(ItemsReceivedCallback callback) { onItemsReceived_ = callback; }
-    void SetMessageCallback(MessageCallback callback) { onMessage_ = callback; }
-    void SetErrorCallback(ErrorCallback callback) { onError_ = callback; }
+    void ExecuteConsoleCommand(const char* command);
 
-private:
+   private:
     void AbortPassword();
     void ConnectSlot();
     void UpdateState(ArchipelagoConnectionState newState);
 
     ArchipelagoConnectionState state_;
     std::string slotName_;
+    int playerSlot_ = 0;
     std::string password_;
+    int itemsHandling_ = 0b0001;  // Send items from other players
     std::string lastError_;
     std::string currentUri_;
     double retryTimer_;
     double retryInterval_;
     int maxRetries_;
     int retryCount_;
+    std::fstream indexFile;
 
-    ConnectedCallback onConnected_;
-    DisconnectedCallback onDisconnected_;
-    ItemsReceivedCallback onItemsReceived_;
-    MessageCallback onMessage_;
-    ErrorCallback onError_;
+    std::set<int64_t> missingLocations_;
+    std::set<int64_t> checkedLocations_;
+    int64_t lastReceivedItemIndex_ = -1;
 };

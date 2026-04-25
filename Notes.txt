@@ -36,51 +36,58 @@ chest_id2.item_drop
 Find out the chest delegate real parent and then match on that function to get the chest
 
 
+// Goals for stream 4/2/2026
+Talk about bug with shards rn
+How do shards work??? Try hooking on equipment manager
+How do we build an AP World? Hoping to learn from scratch. Trying APQuest.
+
+// Notes for stream 4/2/2026
+
+// Coin actor that spawns for player to pickup
+Coin03_CollectableBP_Child_C /Game/Core/Environment/ACT01_SIP/Level/m01SIP_006_Enemy_LevelInstance_576.m01SIP_006_Enemy:PersistentLevel.Coin03_CollectableBP_Child_C_0
+K2Node_ComponentBoundEvent_OverlapPCInfo
+
+
+// Goals for stream 4/3/2026
+Check setting the timer on recieving a shard
+How do we build an AP World? Hoping to learn from scratch. Trying APQuest.
+
+// Notes for stream 4/3/2026
+
+// Coin actor that spawns for player to pickup
+Coin03_CollectableBP_Child_C /Game/Core/Environment/ACT01_SIP/Level/m01SIP_006_Enemy_LevelInstance_576.m01SIP_006_Enemy:PersistentLevel.Coin03_CollectableBP_Child_C_0
+K2Node_ComponentBoundEvent_OverlapPCInfo
+
+
+// Goals for stream 4/6/2026
+Check how to give items to player ingame
+Setup the client to send items in game
+Check how to send items in game
+
+// Notes for stream 4/6/2026
 
 
 
 
-## Getting APClientPP Functioning in Visual Studio 2026 Project with vcpkg
-
-### Prerequisites Tools for Configuration:
-- Visual Studio 2026
-- MSVC: v145 for Microsoft C++ Build Tools
-- C++ STD20
-- vcpkg: Accessible with Elevated VS Shell
-- git
-
-### Preprocessor Definitions: 
-`ASIO_STANDALONE _DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR _WEBSOCKETPP_CPP11_THREAD ASIO_NO_WIN32_LEAN_AND_MEAN _WIN32_WINNT=0x0600 WIN32_LEAN_AND_MEAN NOMINMAX WSWRAP_SEND_EXCEPTIONS AP_NO_SCHEMA APCLIENT_DEBUG`
-(Duplicates are made during build time apparently, so use as needed)
-
-### Without SSL support:
-Add each dependency, valijson, json, websocketpp, asio, and apclientpp as a git submodule in the project
-Inside the asio root directory, use `git checkout 03ae834ed` to get asio. 1.32.0. Testing shows asio 1.32.0 still functions with websocketpp
-
-### With SSL support: vcpkg was used. Ensure the "Without SSL Support" section has been completed before continuing.
-In the root of project with sln, or slnx, create `vcpkg.json` with this configuration: 
-{
-  "dependencies": [
-    "openssl",
-    "zlib"
-  ]
-}
-
-### Using VCPKG as package manager
-For vcpkg to allow installations, a "baseline" uuid is required. Enter `vcpkg x-update-baseline --add-initial-baseline` 
-If an error occurs from `vcpkg` about "No baseline found", please use the above step as its required.
-
-### Linking Additional Dependences:
-Go to Project Properties -> Linker -> Input -> Additional Dependencies
-
-Add the following lines:
-vcpkg\installed\x64-windows\lib\libcrypto.lib
-vcpkg\installed\x64-windows\lib\libssl.lib
-crypt32.lib
-
-Windows SDK has crypt32 already, so just add `crypt32.lib`
-
-Includes are same as README.md from apclientpp
 
 
+// Step class
+Step_P0000_C /Game/Core/System/GameWorld.GameWorld:PersistentLevel.Chr_P0000_C_0.Step_P0000_C_0
+m_MainEnemy is the enemy that could / currently is being fought
+
+// Shard notes
+MULTICAST_EquipShardNotify
+
+BP_DM_BaseLantern_Front_Child_917.OnReceiveEvent
+BP_DM_BaseLantern_Right_Child_752.OnReceiveEvent
+BP_DM_BaseLantern_Left_Child_947.OnReceiveEvent
+PBBloodDecalObject_0.OnReceiveEvent
+PurpleShard_C_0.OnReceiveEvent
+Bag01_CollectableBP_C_0.OnReceiveEvent
+
+
+
+// Todays stream (4/9/2026)
+- Build out AP World with items
+- "Putting items into chests"
 

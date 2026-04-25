@@ -12,7 +12,7 @@ jobs:
 
     env:
       SOLUTION_FILE_PATH: .
-      BUILD_CONFIGURATION: Debug
+      BUILD_CONFIGURATION: Release
 
     steps:
       - name: Checkout repository
@@ -26,8 +26,8 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            vcpkg_installed\x64-windows-release\lib
-            vcpkg_installed\x64-windows-release\include
+            vcpkg_installed\x64-windows-static-md\lib
+            vcpkg_installed\x64-windows-static-md\include
           key: vcpkg-installed-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
           restore-keys: |
             vcpkg-installed-${{ runner.os }}-
@@ -39,7 +39,7 @@ jobs:
 
       - name: Install dependences via vcpkg
         if: steps.vcpkg-cache.outputs.cache-hit != 'true'
-        run: vcpkg install --triplet x64-windows-release
+        run: vcpkg install --triplet x64-windows-static-md
         shell: pwsh
 
       - name: Add MSBuild to PATH

@@ -12,7 +12,7 @@ jobs:
 
     env:
       SOLUTION_FILE_PATH: .
-      BUILD_CONFIGURATION: Debug
+      BUILD_CONFIGURATION: Release
 
     steps:
       - name: Checkout repository
@@ -26,8 +26,8 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            vcpkg_installed\x64-windows-release\lib
-            vcpkg_installed\x64-windows-release\include
+            vcpkg_installed\x64-windows-static-md\lib
+            vcpkg_installed\x64-windows-static-md\include
           key: vcpkg-installed-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
           restore-keys: |
             vcpkg-installed-${{ runner.os }}-
@@ -39,7 +39,7 @@ jobs:
 
       - name: Install dependences via vcpkg
         if: steps.vcpkg-cache.outputs.cache-hit != 'true'
-        run: vcpkg install --triplet x64-windows-release
+        run: vcpkg install --triplet x64-windows-static-md
         shell: pwsh
 
       - name: Add MSBuild to PATH
@@ -53,7 +53,7 @@ jobs:
             -replace '<BSGamePath>.*?</BSGamePath>', "<BSGamePath>${{ env.SOLUTION_FILE_PATH }}</BSGamePath>" |
             Set-Content $proj
 
-      - name: Build solution (Debug x64)
+      - name: Build solution (Release x64)
         run: >
           msbuild BloodstainedModdingSDK.vcxproj
           /p:Configuration=${{ env.BUILD_CONFIGURATION }}
@@ -61,12 +61,14 @@ jobs:
           /m
         shell: pwsh
 
-      # ── 6. Upload artifact ────────────────────────────────────────────────
-      # - name: Upload build artifact
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: BloodstainedModdingSDK-Debug-x64
-      #     path: |
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        if: github.ref == 'refs/heads/main'
+        with:
+          name: BloodstainedModdingSDK-Debug-x64
+          path: |
+            x64\Release\version.dll
+          if-no-files-found: error
       #       x64\Debug\*.dll
       #       x64\Debug\*.pdb
       #     if-no-files-found: error

@@ -6,64 +6,69 @@
 #endif
 #include <iostream>
 #include <thread>
-#include "version/version.h"
 
-#include "Engine_classes.hpp"
-#include "Mod/Logger.h"
-#include "Mod/HookManager.h"
 #include "Mod/GameManager.h"
 #include "Mod/Gui.h"
-#include "Mod/ModRunner.h"
+#include "Mod/HookManager.h"
+#include "Mod/Logger.h"
 #include "kiero.h"
+#include "version/version.h"
 
 long __stdcall HookedPresent(IDXGISwapChain* swapChain, unsigned int syncInterval, unsigned int flags);
 
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-LRESULT __stdcall HookWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-	if (Gui::Instance().IsOpen() && ImGui_ImplWin32_WndProcHandler(hwnd, msg, wParam, lParam))
-	{
-		return true;
-	}
-	return CallWindowProc((WNDPROC)Gui::Instance().GetOriginalWndProc(), hwnd, msg, wParam, lParam);
+LRESULT __stdcall HookWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+    // Track resize state
+    if (msg == WM_ENTERSIZEMOVE) {
+        Gui::Instance().SetResizing(true);
+    } else if (msg == WM_EXITSIZEMOVE) {
+        Gui::Instance().SetResizing(false);
+    }
+
+    // Let resize/move messages pass through to original handler
+    if (msg == WM_SIZE || msg == WM_MOVE || msg == WM_WINDOWPOSCHANGED ||
+        msg == WM_SIZING || msg == WM_ENTERSIZEMOVE || msg == WM_EXITSIZEMOVE) {
+        return CallWindowProc((WNDPROC)Gui::Instance().GetOriginalWndProc(), hwnd, msg, wParam, lParam);
+    }
+
+    if (Gui::Instance().IsOpen() && ImGui_ImplWin32_WndProcHandler(hwnd, msg, wParam, lParam)) {
+        return CallWindowProc((WNDPROC)Gui::Instance().GetOriginalWndProc(), hwnd, msg, wParam, lParam);
+    }
+    return CallWindowProc((WNDPROC)Gui::Instance().GetOriginalWndProc(), hwnd, msg, wParam, lParam);
 }
 
 // Salvaged Code from Livestream
 BOOL APIENTRY InitKieroAndHook() {
-	HWND hwnd = Gui::Instance().GetGameWindow();
-	if (hwnd) {
-		WNDPROC originalWndProc = (WNDPROC)SetWindowLongPtrW(hwnd, GWLP_WNDPROC, (LONG_PTR)HookWndProc);
-		Gui::Instance().SetOriginalWndProc(originalWndProc);
-		Logger::Log("WndProc Hooked");
-	}
+    HWND hwnd = Gui::Instance().GetGameWindow();
+    if (hwnd) {
+        WNDPROC originalWndProc = (WNDPROC)SetWindowLongPtrW(hwnd, GWLP_WNDPROC, (LONG_PTR)HookWndProc);
+        Gui::Instance().SetOriginalWndProc(originalWndProc);
+        Logger::Log("WndProc Hooked");
+    }
 
-	kiero::init(kiero::RenderType::D3D11);
+    kiero::init(kiero::RenderType::D3D11);
 
-	if (kiero::bind(8, (void**)&Gui::originalPresent, (void*)HookedPresent) == kiero::Status::Success) {
-		Logger::Log("Present hook installed");
-		Gui::g_Hooked = true;
-		return true;
-	}
-	else {
-		Logger::Log("ERROR: Failed to hook Present");
-		return false;
-	}
+    if (kiero::bind(8, (void**)&Gui::originalPresent, (void*)HookedPresent) == kiero::Status::Success) {
+        Logger::Log("Present hook installed");
+        Gui::g_Hooked = true;
+        return true;
+    } else {
+        Logger::Log("ERROR: Failed to hook Present");
+        return false;
+    }
 }
 
-void renderGui()
-{
-    if (!Gui::Instance().IsImGuiInit())
-        return;
+void renderGui() {
+    if (!Gui::Instance().IsImGuiInit()) return;
 
     Gui::Instance().Render();
 }
 
-long __stdcall HookedPresent(IDXGISwapChain* swapChain, unsigned int syncInterval, unsigned int flags)
-{
+long __stdcall HookedPresent(IDXGISwapChain* swapChain, unsigned int syncInterval, unsigned int flags) {
     static bool init = false;
-    if (!init)
-    {
+
+    if (!init) {
         init = true;
         Gui::Instance().InitImGui(swapChain);
         Logger::Log("Present hooked - GUI initialized");
@@ -74,59 +79,48 @@ long __stdcall HookedPresent(IDXGISwapChain* swapChain, unsigned int syncInterva
     return Gui::originalPresent(swapChain, syncInterval, flags);
 }
 
-DWORD APIENTRY MainThread(HMODULE Module)
-{
-#ifdef _DEBUG
+DWORD APIENTRY MainThread(HMODULE Module) {
     char dllName[MAX_PATH];
     GetModuleFileNameA(Module, dllName, MAX_PATH);
 
+    #ifdef _DEBUG
     Logger::Init();
+    #endif
     Logger::Log("Starting Bloodstained Fun Mod");
+
+
+    while (!GameManager::Instance().Init()) Sleep(500);
+
+    while (!HookManager::Instance().Init()) Sleep(500);
 
     Gui::Instance().Init();
 
-    if (!InitKieroAndHook())
-        return 0;
+    if (!InitKieroAndHook()) return 0;
 
-    while (!GameManager::Instance().Init())
-        Sleep(500);
+    while (!GameManager::Instance().PostInit()) Sleep(500);
 
-    while (!HookManager::Instance().Init())
-        Sleep(500);
+    while (!HookManager::Instance().PostInit()) Sleep(500);
 
-    while (!GameManager::Instance().PostInit())
-        Sleep(500);
-
-    while (!HookManager::Instance().PostInit())
-        Sleep(500);
-    
     Logger::Log("Ready to Game!");
 
     // Gui::Instance().Shutdown();
     // kiero::shutdown();
 
-#endif
-
     FreeLibraryAndExitThread(Module, 0);
     return 0;
 }
 
-BOOL APIENTRY DllMain(HMODULE hModule,
-    DWORD  ul_reason_for_call,
-    LPVOID lpReserved
-)
-{
+BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved) {
     std::thread* second;
-    switch (ul_reason_for_call)
-    {
-    case DLL_PROCESS_ATTACH:
-        setupWrappers();
-        second = new std::thread(MainThread, hModule);
-        break;
-    case DLL_THREAD_ATTACH:
-    case DLL_THREAD_DETACH:
-    case DLL_PROCESS_DETACH:
-        break;
+    switch (ul_reason_for_call) {
+        case DLL_PROCESS_ATTACH:
+            setupWrappers();
+            second = new std::thread(MainThread, hModule);
+            break;
+        case DLL_THREAD_ATTACH:
+        case DLL_THREAD_DETACH:
+        case DLL_PROCESS_DETACH:
+            break;
     }
     return TRUE;
 }

@@ -1,17 +1,17 @@
 #pragma once
-#include "SDK.hpp"
-#include "Logger.h"
+#include <chrono>
 #include <functional>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
-#include <string>
-#include <chrono>
 
-class NotifyObject
-{
-public:
+#include "Logger.h"
+
+class NotifyObject {
+   public:
     using Callback = std::function<void(void* obj)>;
     using CallbackWithFunc = std::function<void(void* obj, const std::string& funcName)>;
+    using CallBackWithFuncAndParams = std::function<void(void* obj, const std::string& funcName, void* params)>;
     using IsValidFunc = std::function<bool(void* obj)>;
 
     NotifyObject() = default;
@@ -20,60 +20,54 @@ public:
     int GetCallbackCount() const { return (int)callbacks.size() + (int)classCallbacks.size(); }
     int GetProcessedCount() const { return processedCount; }
 
-    void Register(const std::string& className, const std::string& funcName, Callback callback)
-    {
+    void Register(const std::string& className, const std::string& funcName, Callback callback) {
         std::string key = className + "|" + funcName;
         callbacks[key] = callback;
         Logger::Log("[NotifyObject] Registered class=", className, " func=", funcName);
     }
 
-    void Register(const std::string& className, Callback callback)
-    {
+    void Register(const std::string& className, Callback callback) {
         classCallbacks[className] = callback;
         Logger::Log("[NotifyObject] Registered class=", className, " (all funcs)");
     }
 
-    void RegisterWithFuncName(const std::string& className, CallbackWithFunc callback)
-    {
+    void RegisterWithFuncName(const std::string& className, CallbackWithFunc callback) {
         classCallbacksWithFunc[className] = callback;
         Logger::Log("[NotifyObject] Registered class=", className, " (with func names)");
     }
 
-    void RegisterPartial(const std::string& partialName, Callback callback)
-    {
+    void RegisterPartial(const std::string& partialName, Callback callback) {
         std::string lower = partialName;
         for (auto& c : lower) c = std::tolower(c);
         partialCallbacks[lower] = callback;
         Logger::Log("[NotifyObject] Registered partial=", partialName, " (case-insensitive)");
     }
 
-    void RegisterPartial(const std::string& partialName, CallbackWithFunc callback)
-    {
+    void RegisterPartial(const std::string& partialName, CallbackWithFunc callback) {
         std::string lower = partialName;
         for (auto& c : lower) c = std::tolower(c);
         partialCallbacksWithFunc[lower] = callback;
         Logger::Log("[NotifyObject] Registered partial=", partialName, " with func (case-insensitive)");
     }
 
-    void SetValidityChecker(IsValidFunc checker)
-    {
-        isValidFunc = checker;
+    void RegisterWithFuncNameAndParams(const std::string& className, const std::string& funcName,
+                                       CallBackWithFuncAndParams callback) {
+        classCallbacksWithFuncAndParams[className] = callback;
+        Logger::Log("[NotifyObject] Registered class=", className, " (with func names and params)");
     }
 
-    void OnProcessEvent(void* obj, const std::string& className, const std::string& funcName)
-    {
-        if (!obj)
-            return;
+    void SetValidityChecker(IsValidFunc checker) { isValidFunc = checker; }
+
+    void OnProcessEvent(void* obj, const std::string& className, const std::string& funcName, void* params) {
+        if (!obj) return;
 
         CleanupIfNeeded();
 
         std::string key = className + "|" + funcName;
         auto it = callbacks.find(key);
-        if (it != callbacks.end())
-        {
+        if (it != callbacks.end()) {
             // Logger::Log("[NotifyObject] MATCH class=", className, " func=", funcName);
-            if (trackedObjects.find(obj) == trackedObjects.end())
-            {
+            if (trackedObjects.find(obj) == trackedObjects.end()) {
                 trackedObjects.insert(obj);
                 processedCount++;
                 // Logger::Log("[NotifyObject] Callback fired! (processed: ", processedCount, ")");
@@ -84,11 +78,9 @@ public:
         }
 
         auto classIt = classCallbacks.find(className);
-        if (classIt != classCallbacks.end())
-        {
+        if (classIt != classCallbacks.end()) {
             // Logger::Log("[NotifyObject] MATCH class=", className, " (class callback)");
-            if (trackedObjects.find(obj) == trackedObjects.end())
-            {
+            if (trackedObjects.find(obj) == trackedObjects.end()) {
                 trackedObjects.insert(obj);
                 processedCount++;
                 // Logger::Log("[NotifyObject] Callback fired! (processed: ", processedCount, ")");
@@ -98,8 +90,7 @@ public:
         }
 
         auto classWithFuncIt = classCallbacksWithFunc.find(className);
-        if (classWithFuncIt != classCallbacksWithFunc.end())
-        {
+        if (classWithFuncIt != classCallbacksWithFunc.end()) {
             // Logger::Log("[NotifyObject] MATCH class=", className, " func=", funcName, " (with func name)");
             classWithFuncIt->second(obj, funcName);
         }
@@ -108,51 +99,44 @@ public:
         std::string lowerClassName = className;
         for (auto& c : lowerClassName) c = std::tolower(c);
 
-        for (const auto& [partial, callback] : partialCallbacks)
-        {
-            if (lowerClassName.find(partial) != std::string::npos)
-            {
+        for (const auto& [partial, callback] : partialCallbacks) {
+            if (lowerClassName.find(partial) != std::string::npos) {
                 callback(obj);
                 break;
             }
         }
 
-        for (const auto& [partial, callback] : partialCallbacksWithFunc)
-        {
-            if (lowerClassName.find(partial) != std::string::npos)
-            {
+        for (const auto& [partial, callback] : partialCallbacksWithFunc) {
+            if (lowerClassName.find(partial) != std::string::npos) {
                 callback(obj, funcName);
                 break;
             }
         }
+        auto classWithFuncAndParamsIt = classCallbacksWithFuncAndParams.find(className);
+        if (classWithFuncAndParamsIt != classCallbacksWithFuncAndParams.end()) {
+            classWithFuncAndParamsIt->second(obj, funcName, params);
+        }
     }
 
-    void Clear()
-    {
+    void Clear() {
         callbacks.clear();
         classCallbacks.clear();
         classCallbacksWithFunc.clear();
         trackedObjects.clear();
     }
 
-private:
-    void CleanupIfNeeded()
-    {
+   private:
+    void CleanupIfNeeded() {
         auto now = std::chrono::steady_clock::now();
         auto elapsed = std::chrono::duration<double, std::milli>(now - lastCleanup).count();
 
-        if (elapsed < 500.0)
-            return;
+        if (elapsed < 500.0) return;
 
-        for (auto it = trackedObjects.begin(); it != trackedObjects.end(); )
-        {
-            if (!isValidFunc || !isValidFunc(*it))
-            {
+        for (auto it = trackedObjects.begin(); it != trackedObjects.end();) {
+            if (!isValidFunc || !isValidFunc(*it)) {
                 Logger::Log("[NotifyObject] Removing invalid obj=", (void*)*it);
                 it = trackedObjects.erase(it);
-            }
-            else
-            {
+            } else {
                 ++it;
             }
         }
@@ -162,6 +146,7 @@ private:
     std::unordered_map<std::string, Callback> callbacks;
     std::unordered_map<std::string, Callback> classCallbacks;
     std::unordered_map<std::string, CallbackWithFunc> classCallbacksWithFunc;
+    std::unordered_map<std::string, CallBackWithFuncAndParams> classCallbacksWithFuncAndParams;
     std::unordered_map<std::string, Callback> partialCallbacks;
     std::unordered_map<std::string, CallbackWithFunc> partialCallbacksWithFunc;
     std::unordered_set<void*> trackedObjects;

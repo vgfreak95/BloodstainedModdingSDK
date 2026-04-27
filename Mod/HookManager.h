@@ -7,6 +7,7 @@
 #include "NotifyObject.h"
 #include "ThreadQueue.h"
 #include "SDK.hpp"
+#include "Mod/GameManager.h"
 
 extern "C" {
 #include "MinHook.h"
@@ -61,8 +62,10 @@ class HookManager {
         if (funcName == "ReceiveTick" || funcName == "Tick") {
             ThreadQueue::Instance().Flush();
         }
-        APBridge::Instance().ProcessPending();
-        Archipelago::Instance().Poll();
+        if (GameManager::Instance().IsInitialized() && !GameManager::Instance().IsPlayerDead()) {
+			APBridge::Instance().ProcessPending();
+			Archipelago::Instance().Poll();
+        }
 
         notifyObject.OnProcessEvent(obj, className, funcName, params);
     }

@@ -149,6 +149,9 @@
     <ClCompile Include="Mod\APBridge.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Mod\Utils.cpp">
+      <Filter>Source Files\Mod\Sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="version\version.h">
@@ -251,6 +254,9 @@
       <Filter>Source Files\Archipelago</Filter>
     </ClInclude>
     <ClInclude Include="Mod\APBridge.h" />
+    <ClInclude Include="Mod\Utils.h">
+      <Filter>Source Files\Mod\Headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="version\version.def">

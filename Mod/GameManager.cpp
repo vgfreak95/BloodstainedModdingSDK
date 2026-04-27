@@ -2,6 +2,9 @@
 #include "GameManager.h"
 
 #include <Basic.hpp>
+#include <ItemGetPopup_classes.hpp>
+#include <PBInterfaceHUDBP_classes.hpp>
+#include <PB_Chr_Root_classes.hpp>
 #include <ProjectBlood_classes.hpp>
 #include <ProjectBlood_structs.hpp>
 #include <UnrealContainers.hpp>
@@ -11,6 +14,7 @@
 #include "Engine_classes.hpp"
 #include "Logger.h"
 #include "ThreadQueue.h"
+#include "Utils.h"
 
 #define PLAYER_NAME "Chr_P0000_C_0"
 
@@ -30,17 +34,20 @@ bool GameManager::IsInstanceValid(SDK::UObject* object, const char* c_str) {
 
 bool GameManager::IsPlayerLoadedInGame() {
     auto playerController = GameManager::Instance().PlayerController();
-    auto playerControllerName = playerController->GetName();
-    if (playerControllerName == "PBTitlePlayerController_C_0")
-        return false;
-    else if (playerControllerName == "PBPlayerController_0")
-        return true;
+    if (playerController) {
+		auto playerControllerName = playerController->GetName();
+		if (playerControllerName == "PBTitlePlayerController_C_0")
+			return false;
+		else if (playerControllerName == "PBPlayerController_0")
+			return true;
+    }
 }
 
 bool GameManager::Init() {
     if (!GameManager::IsInstanceValid(GameManager::Engine(), "Engine")) return false;
     if (!GameManager::IsInstanceValid(GameManager::World(), "World")) return false;
     Logger::Log("Game Manager initialized successfully");
+    initCompleted = true;
     return true;
 }
 
@@ -53,7 +60,11 @@ bool GameManager::PostInit() {
     if (!GameManager::Instance().IsPlayerLoadedInGame()) return false;
     ProcessNamePool();
     Logger::Log("Game Manager POST initialized successfully");
+    postInitCompleted = true;
+    return true;
 }
+
+bool GameManager::IsInitialized() { return initCompleted && postInitCompleted ? true : false; }
 
 void GameManager::ProcessNamePool() {
     for (UC::uint32 i = 0; i < SDK::UObject::GObjects->Num(); i++) {
@@ -83,36 +94,67 @@ SDK::FName GameManager::FindName(std::string name) {
     return SDK::FName();
 }
 
-void GameManager::IncreasePlayerMaxStats(std::string& maxStat) {
+void GameManager::GivePlayerMaxStatItem(std::string& maxStat, bool shouldDisplay) {
     auto player = GameManager::Instance().Player();
 
-    ThreadQueue::Instance().Enqueue([player, maxStat]() {
-        std::wstring wideName;
-        if (maxStat == "Max_HP") {
-            std::string name = "MaxHPUP";
-            wideName = std::wstring(name.begin(), name.end());
-        } else if (maxStat == "Max_MP") {
-            std::string name = "MaxMPUP";
-            wideName = std::wstring(name.begin(), name.end());
-        } else if (maxStat == "Max_Capacity") {
-            std::string name = "MaxBulletUp";
-            wideName = std::wstring(name.begin(), name.end());
-        }
+    ThreadQueue::Instance().Enqueue([player, maxStat, shouldDisplay]() {
+        std::wstring wideName = std::wstring(maxStat.begin(), maxStat.end());
+        SDK::APBPlayerController* controller = (SDK::APBPlayerController*)GameManager::Instance().PlayerController();
+        SDK::APBInterfaceHUDBP_C* hud = (SDK::APBInterfaceHUDBP_C*)controller->MyHUD;
+
         auto itemName = SDK::UKismetStringLibrary::Conv_StringToName(wideName.c_str());
         player->CharacterInventory->UseConsumable(itemName, false);
+        if (shouldDisplay) {
+            UC::FString displayString = FStringFromString(maxStat);
+            hud->DisplayItemNameWindow(displayString, 1022);
+        }
     });
 }
 
-void GameManager::GivePlayerItem(std::string name) {
+void GameManager::GivePlayerCoin(SDK::int32 amount, bool shouldDisplay) {
+    if (amount != 50 && amount != 100 && amount != 500 && amount != 1000 && amount != 2000) return;
+
+    ThreadQueue::Instance().Enqueue([amount, shouldDisplay] {
+        SDK::APBPlayerController* controller = (SDK::APBPlayerController*)GameManager::Instance().PlayerController();
+        SDK::APBInterfaceHUDBP_C* hud = (SDK::APBInterfaceHUDBP_C*)controller->MyHUD;
+        SDK::APB_Chr_Root_C* player = (SDK::APB_Chr_Root_C*)GameManager::Instance().Player();
+
+        auto dropCoin = GameManager::Instance().CoinLookup[amount];
+        auto coinIconId = player->CharacterInventory->GetCoinIcon(dropCoin);
+        auto coinString = std::to_string(amount) + "G";
+
+        if (shouldDisplay) {
+            UC::FString displayString = FStringFromString(coinString);
+            hud->DisplayItemNameWindow(displayString, coinIconId);
+        }
+
+        SDK::UPBGameInstance* instance = (SDK::UPBGameInstance*)GameManager::Instance().GameInstance();
+        instance->AddTotalCoin(amount);
+    });
+}
+
+void GameManager::SendInGameNotification(std::string notification, float iconId) {
+    ThreadQueue::Instance().Enqueue([notification, iconId]() {
+        SDK::APBPlayerController* controller = (SDK::APBPlayerController*)GameManager::Instance().PlayerController();
+        SDK::APBInterfaceHUDBP_C* hud = (SDK::APBInterfaceHUDBP_C*)controller->MyHUD;
+        SDK::APB_Chr_Root_C* player = (SDK::APB_Chr_Root_C*)GameManager::Instance().Player();
+
+        UC::FString displayString = FStringFromString(notification);
+        hud->DisplayItemNameWindow(displayString, iconId);
+    });
+}
+
+void GameManager::GivePlayerItem(std::string name, bool shouldDisplay) {
     auto player = GameManager::Instance().Player();
     auto inventory = player->CharacterInventory;
+    SDK::UPBGameInstance* inst = (SDK::UPBGameInstance*)GameManager::Instance().GameInstance();
 
     std::wstring wideName(name.begin(), name.end());
     auto itemName = SDK::UKismetStringLibrary::Conv_StringToName(wideName.c_str());
-    ThreadQueue::Instance().Enqueue([itemName, inventory]() {
+    ThreadQueue::Instance().Enqueue([itemName, inventory, shouldDisplay]() {
         SDK::FPBItemCatalogData itemData = SDK::FPBItemCatalogData();
         inventory->GetItemDataById(itemName, &itemData);
-        inventory->GetItemWithDisplay(itemName, 1, true);
+        inventory->GetItemWithDisplay(itemName, 1, shouldDisplay);
 
         // auto weaponsOffset = 0x960;
         // auto* manual = reinterpret_cast<uint8_t*>(inventory) + weaponsOffset;

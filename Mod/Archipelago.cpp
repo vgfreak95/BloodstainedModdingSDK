@@ -6,6 +6,7 @@
 #include <Basic.hpp>
 #include <Engine_classes.hpp>
 #include <PB_Chr_PlayerRoot_classes.hpp>
+#include <PB_Chr_Root_classes.hpp>
 #include <ProjectBlood_classes.hpp>
 #include <ProjectBlood_structs.hpp>
 #include <UnrealContainers.hpp>
@@ -18,6 +19,8 @@
 
 #include "GameManager.h"
 #include "Logger.h"
+#include "SDK.hpp"
+#include "Utils.h"
 #include "apclient.hpp"
 #include "apuuid.hpp"
 #include "nlohmann/json_fwd.hpp"
@@ -76,6 +79,10 @@ void Archipelago::ConnectSlot() {
     } else {
         Logger::Log(LogLevel::Debug, "[AP]", "Connection lost.");
     }
+}
+
+void Archipelago::SendInGameNotification(std::string notification) {
+    GameManager::Instance().SendInGameNotification(notification, 1023);
 }
 
 void Archipelago::SendLocationChecks(const std::string& locationId) {
@@ -162,6 +169,19 @@ void Archipelago::SetFileLastIndex() {
     }
 }
 
+void Archipelago::GivePlayerItem(std::string& itemName, bool shouldDisplay) {
+    if (itemName.starts_with("Max")) {
+        GameManager::Instance().GivePlayerMaxStatItem(itemName, shouldDisplay);
+        return;
+    }
+    if (itemName.starts_with("G_")) {
+        int amount = std::stoi(itemName.substr(2));
+        GameManager::Instance().GivePlayerCoin(amount, shouldDisplay);
+        return;
+    }
+    GameManager::Instance().GivePlayerItem(itemName.c_str(), shouldDisplay);
+}
+
 bool Archipelago::Connect(const std::string& slotName, const std::string& password, const std::string uri = "") {
     if (!GameManager::Instance().IsPlayerLoadedInGame()) {
         Logger::Log("Player is not loaded in game");
@@ -214,21 +234,12 @@ bool Archipelago::Connect(const std::string& slotName, const std::string& passwo
     ap->set_print_handler([this](const std::string& msg) { Logger::Log("[AP] Raw print: ", msg); });
 
     ap->set_location_info_handler([this](const std::list<APClient::NetworkItem>& items) {
-        Logger::Log("[AP] LocationInfo handler triggered!");
         for (const auto& item : items) {
             if (item.player == ap->get_player_number()) {
                 Logger::Log("[AP] Item - player:", item.player, " location:", item.location, " item:", item.item,
                             "index:", item.index);
-
                 std::string itemName = ap->get_item_name(item.item, ap->get_game());
-                // Regardless of index give player these stats
-                if (itemName.starts_with("Max")) {
-                    GameManager::Instance().IncreasePlayerMaxStats(itemName);
-                }
-                Logger::Log("[AP] Giving item to player: ", itemName);
-                GameManager::Instance().GivePlayerItem(itemName.c_str());
-            } else {
-                Logger::Log("[AP] Item belongs to other player, skipping");
+                Archipelago::GivePlayerItem(itemName, true);
             }
         }
     });
@@ -241,26 +252,43 @@ bool Archipelago::Connect(const std::string& slotName, const std::string& passwo
         }
 
         int lastIndex = GetFileLastIndex();
+        int highestSelfSentIndex = -1;
 
         for (const auto& item : items) {
             Logger::Log("[AP] Item - player:", item.player, " location:", item.location, " item:", item.item);
 
-            std::string itemName = ap->get_item_name(item.item, ap->get_game());
+            std::string itemId = ap->get_item_name(item.item, ap->get_game());
 
-            Logger::Log(item.index, lastIndex);
+            Logger::Log("Item Index:", item.index, "File Index:", lastIndex, "RAM Index", lastReceivedItemIndex_);
 
             if (item.index <= lastIndex) continue;
             if (item.index <= lastReceivedItemIndex_) continue;
-            if (itemName.starts_with("Max")) {
-                GameManager::Instance().IncreasePlayerMaxStats(itemName);
-                continue;
+            // SDK::UKismetTextLibrary::StringTableIdAndKeyFromText(const class FText &text, class FName *OutTableId,
+            // class FString *OutKey)
+
+            auto player = (SDK::APB_Chr_Root_C*)GameManager::Instance().Player();
+            SDK::FPBItemCatalogData itemData = SDK::FPBItemCatalogData();
+
+            std::wstring wideName(itemId.begin(), itemId.end());
+            auto itemName = SDK::UKismetStringLibrary::Conv_StringToName(wideName.c_str());
+            player->CharacterInventory->GetItemDataById(itemName, &itemData);
+
+            std::string receivedItemsNotification =
+                "Item: " + itemData.Name.ToString() + ", From: " + ap->get_player_alias(item.player);
+
+            if (itemData.Name.ToString().empty()) {
+                receivedItemsNotification = "Item: " + itemName.ToString() + ", From: " + ap->get_player_alias(item.player);
             }
-            GameManager::Instance().GivePlayerItem(itemName.c_str());
+
+            // send notification and don't display the item (implied by notification)
+            Archipelago::SendInGameNotification(receivedItemsNotification);
+            Archipelago::GivePlayerItem(itemId, false);
         }
 
-        Logger::Log("Saving last item index");
-        auto lastItem = items.back();
-        lastReceivedItemIndex_ = lastItem.index;
+		Logger::Log("Saving last item index");
+		auto lastItem = items.back();
+		lastReceivedItemIndex_ = lastItem.index;
+
     });
 
     ap->set_data_package_changed_handler(
@@ -281,8 +309,6 @@ bool Archipelago::Connect(const std::string& slotName, const std::string& passwo
         }
         Logger::Log("[AP] Loaded ", missingLocations_.size(), " missing and ", checkedLocations_.size(),
                     " checked locations");
-
-        // GameManager::Instance().ResetPlayerMaxStats();
     });
 
     // Handlers for disconnection
@@ -313,10 +339,13 @@ bool Archipelago::Connect(const std::string& slotName, const std::string& passwo
 
 void Archipelago::AbortPassword() { awaiting_password = false; }
 
-void Archipelago::Disconnect() { UpdateState(ArchipelagoConnectionState::Disconnected); }
+void Archipelago::Disconnect() { 
+    UpdateState(ArchipelagoConnectionState::Disconnected); 
+    ap.reset();
+}
 
 void Archipelago::Poll() {
-    if (ap) ap->poll();
+	if (ap) ap->poll();
     if (state_ == ArchipelagoConnectionState::Connected && !ap_sync_queued) {
         ConnectSlot();
     }

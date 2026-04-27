@@ -190,6 +190,7 @@
     <ClCompile Include="Mod\Logger.cpp" />
     <ClCompile Include="Mod\ModRunner.cpp" />
     <ClCompile Include="Mod\ToggleMods.cpp" />
+    <ClCompile Include="Mod\Utils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CppSDK\SDK.hpp" />
@@ -225,6 +226,7 @@
     <ClInclude Include="Mod\ModRunner.h" />
     <ClInclude Include="Mod\NotifyObject.h" />
     <ClInclude Include="Mod\ToggleMods.h" />
+    <ClInclude Include="Mod\Utils.h" />
     <ClInclude Include="version\version.h" />
   </ItemGroup>
   <ItemGroup>

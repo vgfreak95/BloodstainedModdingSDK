@@ -23,6 +23,9 @@ class Archipelago {
     void Disconnect();
     void Poll();
     void Sync();
+    void GivePlayerItem(std::string& itemName, bool shouldDisplay = true);
+    void SendInGameNotification(std::string notification);
+    void ResetLocalIndex() { lastReceivedItemIndex_ = -1; };
 
     int GetFileLastIndex();
     void SetFileLastIndex();

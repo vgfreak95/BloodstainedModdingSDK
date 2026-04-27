@@ -1,4 +1,5 @@
 #include "APBridge.h"
+#include <Windows.h>
 
 #include <deque>
 #include <mutex>

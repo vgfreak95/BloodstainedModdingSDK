@@ -37,10 +37,17 @@ class GameManager {
 
     bool Init();
     bool PostInit();
+    bool IsInitialized();
     bool IsInstanceValid(SDK::UObject* object, const char* str);
 
-    void GivePlayerItem(std::string name);
-    void IncreasePlayerMaxStats(std::string& maxStat);
+    void GivePlayerItem(std::string name, bool shouldDisplay = true);
+    void GivePlayerCoin(SDK::int32 amount, bool shouldDisplay = true);
+    void GivePlayerMaxStatItem(std::string& maxStat, bool shouldDisplay = true);
+    void SendInGameNotification(std::string notification, float iconId);
+    bool IsPlayerDead() const { return isPlayerDead; };
+    void PlayerDied() { isPlayerDead = true; };
+    void PlayerAlive() { isPlayerDead = false; };
+
 
     void NotifyOnNewObject(const SDK::UObject* obj, SDK::UFunction* func, void* params);
     void ProcessEvent(const SDK::UObject* obj, SDK::UFunction* func, void* params);
@@ -49,6 +56,11 @@ class GameManager {
     bool IsPlayerLoadedInGame();
     SDK::FPBItemCatalogData* PlayerHasShard(SDK::FName shardId);
     std::unordered_map<std::string, UC::int32> NameLookup;
+    std::unordered_map<UC::int32, SDK::EDropCoin> CoinLookup = {{50, SDK::EDropCoin::D50},
+                                                                {100, SDK::EDropCoin::D100},
+                                                                {500, SDK::EDropCoin::D500},
+                                                                {1000, SDK::EDropCoin::D1000},
+                                                                {2000, SDK::EDropCoin::D2000}};
 
    private:
     GameManager() = default;
@@ -58,4 +70,7 @@ class GameManager {
 
     void ProcessNamePool();
     bool playerLoaded;
+    bool initCompleted;
+    bool postInitCompleted;
+    bool isPlayerDead = false;
 };

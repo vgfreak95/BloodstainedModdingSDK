@@ -22,12 +22,22 @@ static UnlimitedMindMod unlimitedMindMod;
 static UnlimitedIntMod unlimitedIntMod;
 static UnlimitedSpeedMod unlimitedSpeedMod;
 
+#ifdef _DEBUG
 static char s_Host[256] = "localhost";
 static char s_Port[256] = "38281";
 static char s_SlotName[256] = "VGFreak";
 static char s_Password[256] = "";
 static char s_Console[256] = "Knife";
+#else
+static char s_Host[256] = "archipelago.gg";
+static char s_Port[256] = "";
+static char s_SlotName[256] = "";
+static char s_Password[256] = "";
+static char s_Console[256] = "";
+#endif
+
 static bool s_Connected = false;
+
 
 static void RenderArchipelagoPanel() {
     ImGui::SeparatorText("Archipelago");
@@ -76,7 +86,7 @@ static void RenderArchipelagoPanel() {
             s_Connected = true;
         }
 
-        #ifdef _DEBUG
+#ifdef _DEBUG
         ImGui::Text("Console ");
         ImGui::SameLine();
         ImGui::SetNextItemWidth(256);
@@ -90,7 +100,7 @@ static void RenderArchipelagoPanel() {
                 Logger::Log("Cannot execute console command with empty command");
             }
         }
-        #endif
+#endif
 
     } else {
         ImGui::Text("Connected as: %s", s_SlotName);
@@ -225,7 +235,7 @@ void Gui::Render() {
                 RenderArchipelagoPanel();
                 ImGui::EndTabItem();
             }
-            #ifdef _DEBUG
+#ifdef _DEBUG
             if (ImGui::BeginTabItem("Mods")) {
                 // Test toggle button
                 if (GameManager::Instance().IsPlayerLoadedInGame()) {
@@ -235,6 +245,21 @@ void Gui::Render() {
                     unlimitedIntMod.Init("Unlimited Intelligence");
                     unlimitedMindMod.Init("Unlimited Mind");
                     unlimitedSpeedMod.Init("Unlimited Speed");
+
+                    const char* items[] = {"50", "100", "500", "1000", "2000"};
+                    static int selectedIndex = 0;
+                    if (ImGui::BeginCombo("##label", items[selectedIndex])) {
+                        for (int i = 0; i < IM_ARRAYSIZE(items); i++) {
+                            bool isSelected = (selectedIndex == i);
+                            if (ImGui::Selectable(items[i], isSelected)) selectedIndex = i;
+                            if (isSelected) ImGui::SetItemDefaultFocus();
+                        }
+                        ImGui::EndCombo();
+                    }
+                    ImGui::SameLine();
+                    if (ImGui::Button("Give Coin")) {
+                        GameManager::Instance().GivePlayerCoin(std::stoi(items[selectedIndex]));
+                    }
                 }
                 ImGui::EndTabItem();
             }
@@ -242,7 +267,7 @@ void Gui::Render() {
                 RenderDebugInfoPanel();
                 ImGui::EndTabItem();
             }
-            #endif
+#endif
         }
         ImGui::EndTabBar();
     }

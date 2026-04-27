@@ -6,7 +6,6 @@
 #include <UMG_classes.hpp>
 #include <UnrealContainers.hpp>
 
-#include "SDK.hpp"
 #include "Basic.hpp"
 #include "CoreUObject_classes.hpp"
 #include "GameManager.h"
@@ -14,6 +13,7 @@
 #include "Logger.h"
 #include "Mod/Archipelago.h"
 #include "ProjectBlood_classes.hpp"
+#include "SDK.hpp"
 
 std::set<std::string> HookManager::pendingWidgets;
 std::set<std::string> HookManager::processedWidgets;
@@ -60,14 +60,44 @@ bool HookManager::Init() {
         return false;
     }
 
+    //NotifyOnMatchingClass("DataloadList_C", [](void* obj, std::string func) {
+    //    auto uobj = (SDK::UObject*)obj;
+    //    Logger::Log(uobj->GetName(), func);
+    //});
+
+
+    //NotifyOnClassFunction("SaveSlotList", "Destruct", [](void* obj) {
+    //    Logger::Log("Player loaded into game");
+    //});
+
     Logger::Log("HookManager initialized successfully");
     return true;
 }
 
 bool HookManager::PostInit() {
+    // When player dies
+    NotifyOnClassFunction("Step_P0000_C", "EnterDeath1Event", [](void* obj) {
+        GameManager::Instance().PlayerDied();
+        Logger::Log("Player respawned");
+    });
+
+    // When player returns to title screen
+    NotifyOnClassFunction("PBTitlePlayerController_C", "ClientRestart", [](void* obj) {
+        if (!GameManager::Instance().IsPlayerDead()) {
+            Archipelago::Instance().ResetLocalIndex();
+            APBridge::Instance().EnqueueDisconnect();
+        }
+        Logger::Log("Returned to title");
+    });
+
+    // When player returns to title screen
+    //NotifyOnClassFunction("DataloadList_C", "GetSaveslotName", [](void* obj) { Logger::Log("Loaded save file"); });
+
+
     // When player dies and respawns
     NotifyOnClassFunction("PBPlayerController", "ClientRestart", [](void* obj) {
-        Archipelago::Instance().Sync();
+        GameManager::Instance().PlayerAlive();
+        APBridge::Instance().EnqueueSync();
         Logger::Log("Player respawned");
     });
 

@@ -35,7 +35,7 @@ bool is_ws = false;     // set to true if the connection specifically asked for 
 unsigned connect_error_count = 0;
 bool awaiting_password = false;
 
-const std::string GAME_NAME = "Bloodstained";
+const std::string GAME_NAME = "Bloodstained: Ritual of the Night";
 std::string game_seed;
 const int MAX_SEED_LENGTH = 32;
 
@@ -49,12 +49,7 @@ Archipelago& Archipelago::Instance() {
     return instance;
 }
 
-Archipelago::Archipelago()
-    : state_(ArchipelagoConnectionState::Disconnected),
-      retryTimer_(0.0),
-      retryInterval_(10.0),
-      maxRetries_(-1),
-      retryCount_(0) {}
+Archipelago::Archipelago() : state_(ArchipelagoConnectionState::Disconnected) {}
 
 Archipelago::~Archipelago() {}
 
@@ -64,7 +59,7 @@ void Archipelago::ConnectSlot() {
     bool _connected = false;
     if (ap) {
         if (state_ == ArchipelagoConnectionState::Connected) {
-            Logger::Log("[AP] Retrying connection (attempt", retryCount_, ")...");
+            Logger::Log("[AP] Retrying connection...");
             _connected = ap->ConnectSlot(slotName_, password_, itemsHandling_);
             if (_connected) {
                 ap_sync_queued = true;
@@ -115,8 +110,6 @@ void Archipelago::SendLocationChecks(const std::string& locationId) {
     for (int64_t locationId : locations) {
         ap->LocationScouts({locationId}, 0);
         ap->LocationChecks({locationId});
-        checkedLocations_.insert(locationId);
-        missingLocations_.erase(locationId);
         Logger::Log("[AP] Sent scout & check for location: ", locationId);
     }
 }
@@ -169,17 +162,49 @@ void Archipelago::SetFileLastIndex() {
     }
 }
 
+std::string Archipelago::GetStateAsString() {
+    auto state = Archipelago::Instance().GetConnectionState();
+    switch (state) {
+        case ArchipelagoConnectionState::Disconnected:
+            return "Disconnected";
+        case ArchipelagoConnectionState::Connecting:
+            return "Connecting";
+        case ArchipelagoConnectionState::Connected:
+            return "Connected";
+        case ArchipelagoConnectionState::SlotConnected:
+            return "Slot Connected";
+        case ArchipelagoConnectionState::SocketDisconnectedError:
+            return "Socket Disconnected";
+        case ArchipelagoConnectionState::ConnectionRefusedError:
+            return "Connection Refused";
+        case ArchipelagoConnectionState::InvalidSlotError:
+            return "Invalid Slot";
+        default:
+            return "Unknown";
+    }
+}
+
+void Archipelago::BaelDefeated() {
+    auto goalStatus = APClient::ClientStatus::GOAL;
+    if (ap) ap->StatusUpdate(goalStatus);
+}
+
 void Archipelago::GivePlayerItem(std::string& itemName, bool shouldDisplay) {
     if (itemName.starts_with("Max")) {
         GameManager::Instance().GivePlayerMaxStatItem(itemName, shouldDisplay);
         return;
     }
-    if (itemName.starts_with("G_")) {
-        int amount = std::stoi(itemName.substr(2));
+    if (std::isdigit(itemName[0])) {
+        int amount = std::stoi(itemName.substr(0, itemName.size() - 1));
         GameManager::Instance().GivePlayerCoin(amount, shouldDisplay);
         return;
     }
-    GameManager::Instance().GivePlayerItem(itemName.c_str(), shouldDisplay);
+    auto displayName = GameManager::Instance().GetIdFromDisplayName(itemName);
+    if (displayName.has_value()) {
+        GameManager::Instance().GivePlayerItem(displayName.value(), shouldDisplay);
+    } else {
+        GameManager::Instance().GivePlayerItem(itemName.c_str(), shouldDisplay);
+    }
 }
 
 bool Archipelago::Connect(const std::string& slotName, const std::string& password, const std::string uri = "") {
@@ -191,9 +216,6 @@ bool Archipelago::Connect(const std::string& slotName, const std::string& passwo
     slotName_ = slotName;
     password_ = password;
     currentUri_ = uri;
-
-    retryTimer_ = 0.0;
-    retryCount_ = 0;
 
     Logger::Log(LogLevel::Debug, "[AP]", "Connecting Player: ", slotName_, "with uri: ", uri);
     UpdateState(ArchipelagoConnectionState::Connecting);
@@ -252,7 +274,6 @@ bool Archipelago::Connect(const std::string& slotName, const std::string& passwo
         }
 
         int lastIndex = GetFileLastIndex();
-        int highestSelfSentIndex = -1;
 
         for (const auto& item : items) {
             Logger::Log("[AP] Item - player:", item.player, " location:", item.location, " item:", item.item);
@@ -263,8 +284,6 @@ bool Archipelago::Connect(const std::string& slotName, const std::string& passwo
 
             if (item.index <= lastIndex) continue;
             if (item.index <= lastReceivedItemIndex_) continue;
-            // SDK::UKismetTextLibrary::StringTableIdAndKeyFromText(const class FText &text, class FName *OutTableId,
-            // class FString *OutKey)
 
             auto player = (SDK::APB_Chr_Root_C*)GameManager::Instance().Player();
             SDK::FPBItemCatalogData itemData = SDK::FPBItemCatalogData();
@@ -277,7 +296,8 @@ bool Archipelago::Connect(const std::string& slotName, const std::string& passwo
                 "Item: " + itemData.Name.ToString() + ", From: " + ap->get_player_alias(item.player);
 
             if (itemData.Name.ToString().empty()) {
-                receivedItemsNotification = "Item: " + itemName.ToString() + ", From: " + ap->get_player_alias(item.player);
+                receivedItemsNotification =
+                    "Item: " + itemName.ToString() + ", From: " + ap->get_player_alias(item.player);
             }
 
             // send notification and don't display the item (implied by notification)
@@ -285,10 +305,9 @@ bool Archipelago::Connect(const std::string& slotName, const std::string& passwo
             Archipelago::GivePlayerItem(itemId, false);
         }
 
-		Logger::Log("Saving last item index");
-		auto lastItem = items.back();
-		lastReceivedItemIndex_ = lastItem.index;
-
+        Logger::Log("Saving last item index");
+        auto lastItem = items.back();
+        lastReceivedItemIndex_ = lastItem.index;
     });
 
     ap->set_data_package_changed_handler(
@@ -326,26 +345,26 @@ bool Archipelago::Connect(const std::string& slotName, const std::string& passwo
 
     ap->set_slot_refused_handler([this](const std::list<std::string>& reasons_list) {
         Logger::Log("Slot:", slotName_, "couldn't connect");
-        UpdateState(ArchipelagoConnectionState::ConnectionRefusedError);
+        UpdateState(ArchipelagoConnectionState::InvalidSlotError);
     });
 
     ap->set_socket_error_handler([this, slotName](const std::string& error) {
         connect_error_count++;
         Logger::Log(LogLevel::Debug, "[AP]", "Player: ", slotName, "disconnected. Error: ", error);
-        UpdateState(ArchipelagoConnectionState::SocketError);
+        UpdateState(ArchipelagoConnectionState::SocketDisconnectedError);
     });
     return true;
 }
 
 void Archipelago::AbortPassword() { awaiting_password = false; }
 
-void Archipelago::Disconnect() { 
-    UpdateState(ArchipelagoConnectionState::Disconnected); 
+void Archipelago::Disconnect() {
+    UpdateState(ArchipelagoConnectionState::Disconnected);
     ap.reset();
 }
 
 void Archipelago::Poll() {
-	if (ap) ap->poll();
+    if (ap) ap->poll();
     if (state_ == ArchipelagoConnectionState::Connected && !ap_sync_queued) {
         ConnectSlot();
     }

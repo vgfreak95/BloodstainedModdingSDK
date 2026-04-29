@@ -27,8 +27,8 @@ LRESULT __stdcall HookWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     }
 
     // Let resize/move messages pass through to original handler
-    if (msg == WM_SIZE || msg == WM_MOVE || msg == WM_WINDOWPOSCHANGED ||
-        msg == WM_SIZING || msg == WM_ENTERSIZEMOVE || msg == WM_EXITSIZEMOVE) {
+    if (msg == WM_SIZE || msg == WM_MOVE || msg == WM_WINDOWPOSCHANGED || msg == WM_SIZING || msg == WM_ENTERSIZEMOVE ||
+        msg == WM_EXITSIZEMOVE) {
         return CallWindowProc((WNDPROC)Gui::Instance().GetOriginalWndProc(), hwnd, msg, wParam, lParam);
     }
 
@@ -83,18 +83,17 @@ DWORD APIENTRY MainThread(HMODULE Module) {
     char dllName[MAX_PATH];
     GetModuleFileNameA(Module, dllName, MAX_PATH);
 
-    #ifdef _DEBUG
+#ifdef _DEBUG
     Logger::Init();
-    #endif
-    Logger::Log("Starting Bloodstained Fun Mod");
-
+#endif
+    Logger::Log("Starting Bloodstained Modding SDK");
 
     while (!GameManager::Instance().Init()) Sleep(500);
 
     while (!HookManager::Instance().Init()) Sleep(500);
 
+    Sleep(5000);
     Gui::Instance().Init();
-
     if (!InitKieroAndHook()) return 0;
 
     while (!GameManager::Instance().PostInit()) Sleep(500);
@@ -102,9 +101,6 @@ DWORD APIENTRY MainThread(HMODULE Module) {
     while (!HookManager::Instance().PostInit()) Sleep(500);
 
     Logger::Log("Ready to Game!");
-
-    // Gui::Instance().Shutdown();
-    // kiero::shutdown();
 
     FreeLibraryAndExitThread(Module, 0);
     return 0;

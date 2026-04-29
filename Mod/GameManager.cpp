@@ -1,13 +1,18 @@
 #pragma once
 #include "GameManager.h"
 
+#include <stringapiset.h>
+
 #include <Basic.hpp>
+#include <CoreUObject_structs.hpp>
+#include <DataLoadList_classes.hpp>
 #include <ItemGetPopup_classes.hpp>
 #include <PBInterfaceHUDBP_classes.hpp>
 #include <PB_Chr_Root_classes.hpp>
 #include <ProjectBlood_classes.hpp>
 #include <ProjectBlood_structs.hpp>
 #include <UnrealContainers.hpp>
+#include <algorithm>
 #include <format>
 
 #include "CoreUObject_classes.hpp"
@@ -35,12 +40,38 @@ bool GameManager::IsInstanceValid(SDK::UObject* object, const char* c_str) {
 bool GameManager::IsPlayerLoadedInGame() {
     auto playerController = GameManager::Instance().PlayerController();
     if (playerController) {
-		auto playerControllerName = playerController->GetName();
-		if (playerControllerName == "PBTitlePlayerController_C_0")
-			return false;
-		else if (playerControllerName == "PBPlayerController_0")
-			return true;
+        auto playerControllerName = playerController->GetName();
+        if (playerControllerName == "PBTitlePlayerController_C_0")
+            return false;
+        else if (playerControllerName == "PBPlayerController_0")
+            return true;
     }
+}
+
+bool GameManager::PopulateDisplayToItemIdTable() {
+    auto itemTable = SDK::UPBDataTableManager::GetLoadedDataTable(SDK::EPBDataTables::ItemMaster);
+    auto inventory = GameManager::Instance().Player()->CharacterInventory;
+
+    for (auto& pair : itemTable->RowMap) {
+        std::string itemId = pair.Key().ToString();
+        auto itemName = FNameFromString(itemId);
+        SDK::FPBItemCatalogData itemData = SDK::FPBItemCatalogData();
+        inventory->GetItemDataById(itemName, &itemData);
+        if (itemData.Name.ToString().empty()) continue;
+        if (itemData.Name.ToString().starts_with("AP_")) continue;
+
+        std::string displayName = itemData.Name.ToString();
+        DisplayNameToItemId[displayName] = itemId;
+    }
+    return true;
+}
+
+std::optional<std::string> GameManager::GetIdFromDisplayName(const std::string& itemId) {
+    auto it = DisplayNameToItemId.find(itemId);
+    if (it == DisplayNameToItemId.end()) {
+        return std::nullopt;
+    }
+    return it->second;
 }
 
 bool GameManager::Init() {
@@ -58,13 +89,43 @@ bool GameManager::PostInit() {
 
     // Wait for the player to load in
     if (!GameManager::Instance().IsPlayerLoadedInGame()) return false;
-    ProcessNamePool();
+    // ProcessNamePool();
+    ThreadQueue::Instance().Enqueue([this] { GameManager::Instance().PopulateDisplayToItemIdTable(); });
+    Logger::Log(DisplayNameToItemId["Knife"]);
     Logger::Log("Game Manager POST initialized successfully");
     postInitCompleted = true;
     return true;
 }
 
 bool GameManager::IsInitialized() { return initCompleted && postInitCompleted ? true : false; }
+
+void GameManager::CheckBossSoftlock() {
+    Logger::Log("Softlock fix triggered");
+    auto instance = (SDK::UPBGameInstance*)GameManager::Instance().GameInstance();
+    auto currentBoss = instance->CurrentBoss;
+
+    if (currentBoss) {
+        std::string boss = currentBoss->GetBossId().ToString();
+        if ((boss == "N1003" || boss == "N2001" || boss == "N2013") && currentBoss->GetHitPoint() <= 0) {
+            ThreadQueue::Instance().Enqueue([currentBoss]() { currentBoss->EndBossBattle(true); });
+        }
+        if (boss != "N2001") return;
+        Sleep(2000);
+        ThreadQueue::Instance().Enqueue([]() {
+            auto instance = (SDK::UPBGameInstance*)GameManager::Instance().GameInstance();
+            std::string none = "None";
+            std::wstring wideName(none.begin(), none.end());
+            auto noneName = SDK::UKismetStringLibrary::Conv_StringToName(wideName.c_str());
+
+            std::string warpRoom = "m09TRN_003";
+            std::wstring wideRoomName(warpRoom.begin(), warpRoom.end());
+            auto warpName = SDK::UKismetStringLibrary::Conv_StringToName(wideName.c_str());
+            Sleep(2000);
+            Logger::Log("Warping player");
+            instance->pRoomManager->Warp(warpName, false, false, noneName, {0, 0, 0, 0});
+        });
+    }
+}
 
 void GameManager::ProcessNamePool() {
     for (UC::uint32 i = 0; i < SDK::UObject::GObjects->Num(); i++) {
@@ -144,69 +205,64 @@ void GameManager::SendInGameNotification(std::string notification, float iconId)
     });
 }
 
-void GameManager::GivePlayerItem(std::string name, bool shouldDisplay) {
+std::optional<SDK::FPBItemCatalogData> GameManager::PlayerHasItem(
+    const SDK::TArray<SDK::FPBItemCatalogData>& itemsArray, const std::string& itemName) {
+    std::string lowerItemName = itemName;
+    std::transform(lowerItemName.begin(), lowerItemName.end(), lowerItemName.begin(), ::tolower);
+
+    for (auto& item : itemsArray) {
+        std::string itemId = item.ID.ToString();
+        std::transform(itemId.begin(), itemId.end(), itemId.begin(), ::tolower);
+        if (itemId == lowerItemName) {
+            Logger::Log("Player has item already");
+            return item;
+        }
+    }
+    return std::nullopt;
+}
+
+std::optional<SDK::FPBItemCatalogData> GameManager::CheckAllInventories(const std::string& itemName) {
+    auto* player = static_cast<SDK::APB_Chr_Root_C*>(GameManager::Instance().Player());
+    if (!player || !player->CharacterInventory) return std::nullopt;
+    auto* inv = player->CharacterInventory;
+
+    for (auto& arr : {inv->myWeapons, inv->myBullets, inv->myArmors, inv->myHeadGears, inv->myAccessories,
+                      inv->myMufflers, inv->myConsumables, inv->myFoodstuffs, inv->myKeyItems, inv->myBooks,
+                      inv->myTriggerShards, inv->myEffectiveShards, inv->myDirectionalShards, inv->myEnchantShards,
+                      inv->myFamiliarShards, inv->mySkills}) {
+        auto result = PlayerHasItem(arr, itemName);
+        if (result.has_value()) return result;
+    }
+
+    return std::nullopt;
+}
+
+void GameManager::GivePlayerItem(const std::string& name, bool shouldDisplay) {
     auto player = GameManager::Instance().Player();
     auto inventory = player->CharacterInventory;
     SDK::UPBGameInstance* inst = (SDK::UPBGameInstance*)GameManager::Instance().GameInstance();
 
-    std::wstring wideName(name.begin(), name.end());
-    auto itemName = SDK::UKismetStringLibrary::Conv_StringToName(wideName.c_str());
-    ThreadQueue::Instance().Enqueue([itemName, inventory, shouldDisplay]() {
-        SDK::FPBItemCatalogData itemData = SDK::FPBItemCatalogData();
-        inventory->GetItemDataById(itemName, &itemData);
-        inventory->GetItemWithDisplay(itemName, 1, shouldDisplay);
+    auto itemName = FNameFromString(name);
 
-        // auto weaponsOffset = 0x960;
-        // auto* manual = reinterpret_cast<uint8_t*>(inventory) + weaponsOffset;
-        // auto* sdkDirect = reinterpret_cast<uint8_t*>(&inventory->myWeapons);
-        //
-        // std::cout << "manual:    " << (void*)manual << std::endl;
-        // std::cout << "sdkDirect: " << (void*)sdkDirect << std::endl;
-        //
-        //
-        // // Check sizeof your target type
-        // std::cout << "FPBItemCatalogData size: " << sizeof(SDK::FPBItemCatalogData) << std::endl;
-        //
-        // if (itemData.itemCategory == SDK::ECarriedCatalog::Weapon) {
-        //   // append to the weapons tarray
-        //   Logger::Log("Added item to weapons:", inventory);
-        //   auto weaponsOffset = 0x960;
-        //
-        //   auto** GMalloc = reinterpret_cast<void***>(0x7ff757480f38);
-        //   auto* allocator = *GMalloc;
-        //   auto UE_Malloc = reinterpret_cast<void*(*)(void*, size_t,
-        //   uint32_t)>((*reinterpret_cast<void***>(allocator))[2]); auto UE_Free   = reinterpret_cast<void(*)(void*,
-        //   void*)>((*reinterpret_cast<void***>(allocator))[4]);
-        //
-        //   auto count = inventory->myWeapons.Num();
-        //   auto* myWeapons = reinterpret_cast<SDK::TArray<SDK::FPBItemCatalogData>*>(
-        //       reinterpret_cast<uint8_t*>(inventory) + weaponsOffset
-        //   );
-        //
-        //   // Allocate new buffer
-        //   auto* buffer = static_cast<SDK::FPBItemCatalogData*>(
-        //       UE_Malloc(allocator, sizeof(SDK::FPBItemCatalogData) * (count + 1), alignof(SDK::FPBItemCatalogData))
-        //   );
-        //
-        //   // Copy existing weapons
-        //   if (count > 0 && myWeapons->Data)
-        //       memcpy(buffer, myWeapons->Data, sizeof(SDK::FPBItemCatalogData) * count);
-        //
-        //   // Append new item
-        //   buffer[count] = itemData;
-        //
-        //   // Free old buffer
-        //   if (myWeapons->Data && count > 0)
-        //       UE_Free(allocator, myWeapons->Data);
-        //
-        //   // Point TArray at new buffer
-        //   myWeapons->Data = buffer;
-        //   myWeapons->NumElements = count + 1;
-        //   myWeapons->MaxElements = count + 1;
-        //
-        //   std::cout << "weapons count now: " << myWeapons->Num() << std::endl;
-        //
-        //   inventory->GetItemWithDisplay(itemName, 1, true);
-        //   Logger::Log("Hello");
+    SDK::FPBItemCatalogData itemData = SDK::FPBItemCatalogData();
+
+    auto itemInInventory = GameManager::Instance().CheckAllInventories(name);
+    inventory->GetItemDataById(itemName, &itemData);
+
+    if (itemInInventory.has_value()) {
+        if (itemInInventory->Num == itemInInventory->MaxNum) {
+            auto iconId = inventory->GetItemIcon(itemInInventory->ID);
+            GameManager::Instance().SendInGameNotification("Limit reached: " + itemData.Name.ToString(), iconId);
+        }
+        Logger::Log("Player has", itemInInventory->Num, "of", name);
+    }
+
+    ThreadQueue::Instance().Enqueue([&itemData, itemName, inventory, shouldDisplay, name]() {
+        auto instance = (SDK::UPBGameInstance*)GameManager::Instance().GameInstance();
+        auto str = FStringFromString("ITEM_NAME_Headband");
+        auto value = instance->pStringManager->GetStringFromKey(SDK::EPBStringTables::Master, str);
+
+        Logger::Log(value.ToString());
+        inventory->GetItemWithDisplay(itemName, 1, shouldDisplay);
     });
 }

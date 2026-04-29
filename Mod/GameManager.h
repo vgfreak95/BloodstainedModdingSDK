@@ -1,8 +1,20 @@
 #pragma once
 
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+
+#ifdef _WIN64
+#define WINVER 0x0600
+#define _WIN32_WINNT 0x0600
+#endif
+
+#include <Windows.h>
+
 #include <ProjectBlood_structs.hpp>
 #include <UnrealContainers.hpp>
 #include <unordered_map>
+#include <unordered_set>
 
 #include "CoreUObject_classes.hpp"
 #include "Engine_classes.hpp"
@@ -39,16 +51,23 @@ class GameManager {
     bool PostInit();
     bool IsInitialized();
     bool IsInstanceValid(SDK::UObject* object, const char* str);
+    bool PopulateDisplayToItemIdTable();
 
-    void GivePlayerItem(std::string name, bool shouldDisplay = true);
+    void GivePlayerItem(const std::string& name, bool shouldDisplay = true);
     void GivePlayerCoin(SDK::int32 amount, bool shouldDisplay = true);
     void GivePlayerMaxStatItem(std::string& maxStat, bool shouldDisplay = true);
+
+    std::optional<SDK::FPBItemCatalogData> PlayerHasItem(const SDK::TArray<SDK::FPBItemCatalogData>& itemsArray,
+                                                         const std::string& itemName);
+    std::optional<SDK::FPBItemCatalogData> CheckAllInventories(const std::string& itemName);
+
     void SendInGameNotification(std::string notification, float iconId);
     bool IsPlayerDead() const { return isPlayerDead; };
     void PlayerDied() { isPlayerDead = true; };
     void PlayerAlive() { isPlayerDead = false; };
-
-
+    void CheckBossSoftlock();
+    bool RoomIsBossRoom(const std::string& roomId) const { return bossRooms.count(roomId); };
+    std::optional<std::string> GetIdFromDisplayName(const std::string& itemId);
     void NotifyOnNewObject(const SDK::UObject* obj, SDK::UFunction* func, void* params);
     void ProcessEvent(const SDK::UObject* obj, SDK::UFunction* func, void* params);
     SDK::FName FindName(std::string name);
@@ -73,4 +92,8 @@ class GameManager {
     bool initCompleted;
     bool postInitCompleted;
     bool isPlayerDead = false;
+    const std::unordered_set<std::string> bossRooms = {
+        "m01SIP_000", "m09TRN_002", "m07LIB_011", "m08TWR_019", "m05SAN_023", "m18ICE_018",
+    };
+    std::unordered_map<std::string, std::string> DisplayNameToItemId;
 };

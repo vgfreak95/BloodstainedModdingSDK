@@ -7,7 +7,9 @@
 #include "Logger.h"
 #include "PBBronzeTreasureBox_BP_classes.hpp"
 #include "ProjectBlood_classes.hpp"
+#include "ThreadQueue.h"
 #include "ToggleMods.h"
+#include "Utils.h"
 #include "imgui.h"
 #include "imgui_impl_dx11.h"
 #include "imgui_impl_win32.h"
@@ -37,7 +39,6 @@ static char s_Console[256] = "";
 #endif
 
 static bool s_Connected = false;
-
 
 static void RenderArchipelagoPanel() {
     ImGui::SeparatorText("Archipelago");
@@ -82,6 +83,8 @@ static void RenderArchipelagoPanel() {
             }
         }
 
+        ImGui::Text("Archipelago Connection State: %s", Archipelago::Instance().GetStateAsString().c_str());
+
         if (Archipelago::Instance().IsConnected()) {
             s_Connected = true;
         }
@@ -104,11 +107,7 @@ static void RenderArchipelagoPanel() {
 
     } else {
         ImGui::Text("Connected as: %s", s_SlotName);
-        ImGui::Text("State: %s",
-                    Archipelago::Instance().GetState() == ArchipelagoConnectionState::SlotConnected  ? "Connected"
-                    : Archipelago::Instance().GetState() == ArchipelagoConnectionState::Connecting   ? "Connecting..."
-                    : Archipelago::Instance().GetState() == ArchipelagoConnectionState::Disconnected ? "Disconnected"
-                                                                                                     : "Error");
+        ImGui::Text("Archipelago Connection State: %s", Archipelago::Instance().GetStateAsString().c_str());
         if (ImGui::Button("Disconnect")) {
             Logger::Log("Disconnecting from Archipelago");
             APBridge::Instance().EnqueueDisconnect();
@@ -129,6 +128,21 @@ static void RenderDebugInfoPanel() {
 
         auto text2 = "Treasurebox name: " + SDK::APBBronzeTreasureBox_BP_C::StaticClass()->GetName();
         ImGui::Text(text2.c_str());
+
+        if (ImGui::Button("Teleport")) {
+            std::string start = "m01SIP_000";
+            // std::wstring warpRoomName = L"m09TRN_003";
+            // auto warpName = SDK::UKismetStringLibrary::Conv_StringToName(warpRoomName.c_str());
+
+            std::string none = "None";
+            auto startName = FNameFromString(start);
+            auto noneName = FNameFromString(none);
+            auto instance = (SDK::UPBGameInstance*)GameManager::Instance().GameInstance();
+            ThreadQueue::Instance().Enqueue([startName, noneName, instance]() {
+                Logger::Log("Warping player");
+                instance->pRoomManager->Warp(startName, false, false, noneName, {0, 0, 0, 0});
+            });
+        }
     }
     ImGui::Spacing();
 }

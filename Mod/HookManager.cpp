@@ -1,7 +1,9 @@
 #pragma once
 #include "HookManager.h"
 
+#include <Chr_P0000_classes.hpp>
 #include <Engine_classes.hpp>
+#include <PB_Chr_Root_classes.hpp>
 #include <ProjectBlood_structs.hpp>
 #include <UMG_classes.hpp>
 #include <UnrealContainers.hpp>
@@ -21,6 +23,8 @@ std::set<std::string> HookManager::processedWidgets;
 void (*HookManager::originalProcessEvent)(SDK::UObject*, SDK::UFunction*, void*) = nullptr;
 void (*HookManager::originalProcessLocalScriptFunction)(SDK::UObject*, SDK::UFunction*, void*) = nullptr;
 bool HookManager::playerDetected = false;
+static int tickCount = 0;
+std::unordered_set<std::string> sentLocationChecks;
 
 bool HookManager::Init() {
     MH_Initialize();
@@ -60,23 +64,13 @@ bool HookManager::Init() {
         return false;
     }
 
-    //NotifyOnMatchingClass("DataloadList_C", [](void* obj, std::string func) {
-    //    auto uobj = (SDK::UObject*)obj;
-    //    Logger::Log(uobj->GetName(), func);
-    //});
-
-
-    //NotifyOnClassFunction("SaveSlotList", "Destruct", [](void* obj) {
-    //    Logger::Log("Player loaded into game");
-    //});
-
     Logger::Log("HookManager initialized successfully");
     return true;
 }
 
 bool HookManager::PostInit() {
     // When player dies
-    NotifyOnClassFunction("Step_P0000_C", "EnterDeath1Event", [](void* obj) {
+    NotifyOnClassFunction("PBGameMode_BP_C", "OnGameOver", [](void* obj) {
         GameManager::Instance().PlayerDied();
         Logger::Log("Player respawned");
     });
@@ -90,9 +84,16 @@ bool HookManager::PostInit() {
         Logger::Log("Returned to title");
     });
 
-    // When player returns to title screen
-    //NotifyOnClassFunction("DataloadList_C", "GetSaveslotName", [](void* obj) { Logger::Log("Loaded save file"); });
+    // When Bael is defeated
+    NotifyOnClassFunction("Chr_N1013_Dominique_C", "BP_OnKilled",
+                          [](void* obj) { Archipelago::Instance().BaelDefeated(); });
 
+    // When player changes room
+    NotifyOnClassFunction("PBRoomManager", "OnSerializeGame", [](void* obj) {
+        std::string currentRoomId = GameManager::Instance().RoomManager()->GetCurrentRoomId().ToString();
+        SDK::UPBGameInstance in;
+        Logger::Log("Changed rooms:", currentRoomId);
+    });
 
     // When player dies and respawns
     NotifyOnClassFunction("PBPlayerController", "ClientRestart", [](void* obj) {
@@ -112,55 +113,96 @@ bool HookManager::PostInit() {
         SDK::TMap<SDK::FName, SDK::FPBShardCurrentNum> playerShards;
 
         auto shardBase = reinterpret_cast<SDK::AShardBase*>(obj);
-        auto roomManager = GameManager::Instance().RoomManager();
+        auto instance = GameManager::Instance;
+        auto roomManager = instance().RoomManager();
         auto roomId = roomManager->GetCurrentRoomId().ToString();
 
         // Don't allow in tutorial room because softlock :/
-        if (roomId != "m01SIP_000") {
-            GameManager::Instance().GivePlayerItem(shardBase->ShardId.ToString());
+        if (roomId != "m01SIP_000" && instance().RoomIsBossRoom(roomId)) {
+            instance().GivePlayerItem(shardBase->ShardId.ToString());
             ((SDK::AActor*)(shardBase))->K2_DestroyActor();
         }
+
+        // Check if player is softlocked
+        // GameManager::Instance().CheckBossSoftlock();
     });
 
     // Code below I may need in the future :/
     // Future here, yeah I needed it
 
-    // When item display in bottom left corner is constructed
-    NotifyOnClassFunction("ItemGetPopup_C", "Construct", [](void* obj) {
-        auto* uobj = static_cast<SDK::UObject*>(obj);
-        auto name = uobj->GetName();  // Use GetName to match what Tick uses
-        Logger::Log("[ItemGetPopup] Construct: ", name);
-        pendingWidgets.insert(name);
-    });
+    // NotifyOnClassFunction("Chr_P0000_C", "GetAdditionalCameraTargetLocations", [](void* obj) {
+    //     Logger::Log("Tick from player");
+    //     Logger::Log(tickCount);
+    //     if (++tickCount % 30 != 0) return;
+    //     tickCount = 0;
+    //
+    //     auto* player = static_cast<SDK::AChr_P0000_C*>(obj);
+    //     if (!player || !player->CharacterInventory) return;
+    //
+    //     for (SDK::FPBItemCatalogData& item : player->CharacterInventory->myKeyItems) {
+    //         std::string itemId = item.ID.ToString();
+    //         if (!itemId.starts_with("AP_")) continue;
+    //         Archipelago::Instance().SendLocationChecks(itemId.substr(3));
+    //     }
+    //     // auto* uobj = static_cast<SDK::UObject*>(obj);
+    //     // auto name = uobj->GetName();  // Use GetName to match what Tick uses
+    //     // Logger::Log("[ItemGetPopup] Construct: ", name);
+    //     // pendingWidgets.insert(name);
+    //     // auto player = (SDK::AChr_P0000_C*)GameManager::Instance().Player();
+    //     // SDK::UPBCharacterInventoryComponent* comp = player->CharacterInventory;
+    // });
 
-    // When item display in bottom left corner is being shown to player
     NotifyOnClassFunction("ItemGetPopup_C", "Tick", [](void* obj) {
-        auto* uobj = static_cast<SDK::UObject*>(obj);
-        auto name = uobj->GetName();
-
-        if (pendingWidgets.find(name) == pendingWidgets.end()) return;
-
-        // get text of popup
         auto* popup = static_cast<SDK::UItemGetPopup_C*>(obj);
         std::string popupText = popup->MLTF_SIZE_23_ItemName->text.ToString();
 
-        // Check if AP Item
-        if (!popupText.starts_with("AP_")) {
-            pendingWidgets.erase(name);
-            processedWidgets.insert(name);
-            return;
-        };
+        if (!popupText.starts_with("AP_")) return;
 
-        if (popup->MLTF_SIZE_23_ItemName && popup->MLTF_SIZE_23_ItemName->text.TextData) {
-            // DropItemID Name
-            std::string dropItemId = popupText.substr(3);
-            pendingWidgets.erase(name);
-            processedWidgets.insert(name);
-            Logger::Log("[ItemGetPopup] Item received: ", popupText);
-            Logger::Log("Processing dropItemId:", dropItemId);
-            Archipelago::Instance().SendLocationChecks(dropItemId);
-        }
+        std::string locationId = popupText.substr(3);
+        if (sentLocationChecks.count(locationId)) return;
+
+        sentLocationChecks.insert(locationId);
+        Archipelago::Instance().SendLocationChecks(locationId);
+        Logger::Log("[ItemGetPopup] Sending location check:", locationId);
     });
+
+    // When item display in bottom left corner is constructed
+    // NotifyOnClassFunction("ItemGetPopup_C", "Construct", [](void* obj) {
+    //     auto* uobj = static_cast<SDK::UObject*>(obj);
+    //     auto name = uobj->GetName();  // Use GetName to match what Tick uses
+    //     Logger::Log("[ItemGetPopup] Construct: ", name);
+    //     pendingWidgets.insert(name);
+    // });
+    //
+    // // When item display in bottom left corner is being shown to player
+    // NotifyOnClassFunction("ItemGetPopup_C", "Tick", [](void* obj) {
+    //     auto* uobj = static_cast<SDK::UObject*>(obj);
+    //     auto name = uobj->GetName();
+    //
+    //     if (pendingWidgets.find(name) == pendingWidgets.end()) return;
+    //
+    //     // get text of popup
+    //     auto* popup = static_cast<SDK::UItemGetPopup_C*>(obj);
+    //     std::string popupText = popup->MLTF_SIZE_23_ItemName->text.ToString();
+    //
+    //     // Check if AP Item
+    //     if (!popupText.starts_with("AP_")) {
+    //         pendingWidgets.erase(name);
+    //         processedWidgets.insert(name);
+    //         return;
+    //     };
+    //
+    //     if (popup->MLTF_SIZE_23_ItemName && popup->MLTF_SIZE_23_ItemName->text.TextData) {
+    //         // DropItemID Name
+    //         std::string dropItemId = popupText.substr(3);
+    //         pendingWidgets.erase(name);
+    //         processedWidgets.insert(name);
+    //         Logger::Log("[ItemGetPopup] Item received: ", popupText);
+    //         Logger::Log("Processing dropItemId:", dropItemId);
+    //         Archipelago::Instance().SendLocationChecks(dropItemId);
+    //     }
+    //     Sleep(500);
+    // });
 
     // When player opens treasure box (unused)
     // NotifyOnClassFunction(

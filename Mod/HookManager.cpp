@@ -81,6 +81,7 @@ bool HookManager::PostInit() {
     // When player dies
     NotifyOnClassFunction("Chr_P0000_C", "Kill", [](void* obj) {
         GameManager::Instance().PlayerDied();
+        sentLocationChecks.clear();
         Logger::Log("Player died");
     });
 

@@ -13,6 +13,7 @@
 #include <cstdint>
 #include <fstream>
 #include <iostream>
+#include <map>
 #include <memory>
 #include <nlohmann/json.hpp>
 #include <vector>
@@ -23,6 +24,7 @@
 #include "Utils.h"
 #include "apclient.hpp"
 #include "apuuid.hpp"
+#include "nlohmann/detail/value_t.hpp"
 #include "nlohmann/json_fwd.hpp"
 
 std::unique_ptr<APClient> ap;
@@ -47,6 +49,13 @@ using json = nlohmann::json;
 Archipelago& Archipelago::Instance() {
     static Archipelago instance;
     return instance;
+}
+
+Archipelago* Archipelago::ConnectedInstance() {
+    if (!ap || !Instance().IsConnected()) {
+        return nullptr;
+    }
+    return &Instance();
 }
 
 Archipelago::Archipelago() : state_(ArchipelagoConnectionState::Disconnected) {}
@@ -116,50 +125,20 @@ void Archipelago::SendLocationChecks(const std::string& locationId) {
 
 void Archipelago::Sync() {
     if (IsConnected()) {
-        lastReceivedItemIndex_ = GetFileLastIndex();
+        queueLastIndexReset_ = true;
         ap->Sync();
     }
 }
 
-int Archipelago::GetFileLastIndex() {
-    indexFile.open("index.txt");
-    std::string indexLine;
-
-    // Only read first line
-    if (indexFile.is_open()) {
-        std::getline(indexFile, indexLine);
-        indexFile.close();
-    }
-
-    int lastIndex = -1;
-    try {
-        if (!indexLine.empty()) lastIndex = std::stoi(indexLine);
-    } catch (...) {
-        Logger::Log("Invalid or empty index in index.txt; defaulting lastIndex to -1");
-        lastIndex = -1;
-    }
-    return lastIndex;
-}
-
-void Archipelago::SetFileLastIndex() {
-    int lastFileIndex = GetFileLastIndex();  // from file
-    Logger::Log("Trying to save last index: ", lastFileIndex);
-
-    if (lastReceivedItemIndex_ <= lastFileIndex) {
-        Logger::Log("Bad index");
-        return;
-    } else {
-        // Overwrite the contents of index.txt with the new index
-        std::ofstream indexFile("index.txt", std::ios::out | std::ios::trunc);
-        if (indexFile.is_open()) {
-            Logger::Log("Overwriting last index");
-            indexFile << lastReceivedItemIndex_ << '\n';
-            indexFile.flush();
-            indexFile.close();
-        } else {
-            Logger::Log("Failed to open index.txt for writing");
-        }
-    }
+void Archipelago::UpdateServerLastIndex() {
+    if (!ap) return;
+    std::string key = "index";
+    json defaultValue = {{"value", -1}};
+    // std::list<APClient::DataStorageOperation> replaceOpts = {{"operation", "replace"}, {"value",
+    // lastReceivedItemIndex_}};
+    std::list<APClient::DataStorageOperation> replaceOpts = {
+        {.operation = "replace", .value = {{"value", lastReceivedItemIndex_}}}};
+    ap->Set(key, defaultValue, false, replaceOpts);
 }
 
 std::string Archipelago::GetStateAsString() {
@@ -186,7 +165,9 @@ std::string Archipelago::GetStateAsString() {
 
 void Archipelago::BaelDefeated() {
     auto goalStatus = APClient::ClientStatus::GOAL;
-    if (ap) ap->StatusUpdate(goalStatus);
+    if (ap) {
+        ap->StatusUpdate(goalStatus);
+    }
 }
 
 void Archipelago::GivePlayerItem(std::string& itemName, bool shouldDisplay) {
@@ -205,6 +186,40 @@ void Archipelago::GivePlayerItem(std::string& itemName, bool shouldDisplay) {
     } else {
         GameManager::Instance().GivePlayerItem(itemName.c_str(), shouldDisplay);
     }
+}
+
+void Archipelago::GiveReceivedItems(const std::list<APClient::NetworkItem>& items, int64_t lastIndex) {
+    for (const auto& item : items) {
+        Logger::Log("[AP] Item - player:", item.player, " location:", item.location, " item:", item.item);
+
+        std::string itemId = ap->get_item_name(item.item, ap->get_game());
+
+        Logger::Log("Item Index:", item.index, "File Index:", lastIndex, "RAM Index", lastReceivedItemIndex_);
+
+        if (item.index <= lastIndex) continue;
+        if (item.index <= lastReceivedItemIndex_) continue;
+
+        auto player = (SDK::APB_Chr_Root_C*)GameManager::Instance().Player();
+        SDK::FPBItemCatalogData itemData = SDK::FPBItemCatalogData();
+
+        std::wstring wideName(itemId.begin(), itemId.end());
+        auto itemName = SDK::UKismetStringLibrary::Conv_StringToName(wideName.c_str());
+        player->CharacterInventory->GetItemDataById(itemName, &itemData);
+
+        std::string receivedItemsNotification =
+            "Item: " + itemData.Name.ToString() + ", From: " + ap->get_player_alias(item.player);
+
+        if (itemData.Name.ToString().empty()) {
+            receivedItemsNotification = "Item: " + itemName.ToString() + ", From: " + ap->get_player_alias(item.player);
+        }
+
+        // send notification and don't display the item (implied by notification)
+        Archipelago::SendInGameNotification(receivedItemsNotification);
+        Archipelago::GivePlayerItem(itemId, false);
+    }
+    Logger::Log("Saving last item index");
+    auto lastItem = items.back();
+    lastReceivedItemIndex_ = lastItem.index;
 }
 
 bool Archipelago::Connect(const std::string& slotName, const std::string& password, const std::string uri = "") {
@@ -236,6 +251,7 @@ bool Archipelago::Connect(const std::string& slotName, const std::string& passwo
     game_seed = ap->get_seed();
 
     ap_sync_queued = false;
+    queueLastIndexReset_ = false;
     connect_error_count = 0;
 
     ap->set_socket_connected_handler([this]() {
@@ -258,10 +274,17 @@ bool Archipelago::Connect(const std::string& slotName, const std::string& passwo
     ap->set_location_info_handler([this](const std::list<APClient::NetworkItem>& items) {
         for (const auto& item : items) {
             if (item.player == ap->get_player_number()) {
+                std::string itemName = ap->get_item_name(item.item, ap->get_game());
                 Logger::Log("[AP] Item - player:", item.player, " location:", item.location, " item:", item.item,
                             "index:", item.index);
-                std::string itemName = ap->get_item_name(item.item, ap->get_game());
                 Archipelago::GivePlayerItem(itemName, true);
+            } else {
+                std::string otherPlayer = ap->get_player_alias(item.player);
+                std::string otherGame = ap->get_player_game(item.player);
+                std::string itemName = ap->get_item_name(item.item, otherGame);
+                std::string otherPlayerItemNotification = "Sent: " + itemName + ", To: " + otherPlayer;
+                SendInGameNotification(otherPlayerItemNotification);
+                Logger::Log("[AP] Item belongs to other player, skipping");
             }
         }
     });
@@ -273,41 +296,28 @@ bool Archipelago::Connect(const std::string& slotName, const std::string& passwo
             return;
         }
 
-        int lastIndex = GetFileLastIndex();
+        ap->set_retrieved_handler([this, items](const std::map<std::string, json>& data) {
+            auto indexData = data.at("index");
+            if (indexData == nlohmann::detail::value_t::null) {
+                Logger::Log("[ReceivedHandler] index was null, setting index on server to -1");
+                UpdateServerLastIndex();
+                ap->Get({"index"});
+            } else {
+                auto indexValue = indexData.at("value");
 
-        for (const auto& item : items) {
-            Logger::Log("[AP] Item - player:", item.player, " location:", item.location, " item:", item.item);
-
-            std::string itemId = ap->get_item_name(item.item, ap->get_game());
-
-            Logger::Log("Item Index:", item.index, "File Index:", lastIndex, "RAM Index", lastReceivedItemIndex_);
-
-            if (item.index <= lastIndex) continue;
-            if (item.index <= lastReceivedItemIndex_) continue;
-
-            auto player = (SDK::APB_Chr_Root_C*)GameManager::Instance().Player();
-            SDK::FPBItemCatalogData itemData = SDK::FPBItemCatalogData();
-
-            std::wstring wideName(itemId.begin(), itemId.end());
-            auto itemName = SDK::UKismetStringLibrary::Conv_StringToName(wideName.c_str());
-            player->CharacterInventory->GetItemDataById(itemName, &itemData);
-
-            std::string receivedItemsNotification =
-                "Item: " + itemData.Name.ToString() + ", From: " + ap->get_player_alias(item.player);
-
-            if (itemData.Name.ToString().empty()) {
-                receivedItemsNotification =
-                    "Item: " + itemName.ToString() + ", From: " + ap->get_player_alias(item.player);
+                if (queueLastIndexReset_) {
+                    lastReceivedItemIndex_ = indexValue;
+                    queueLastIndexReset_ = false;
+                }
+                GiveReceivedItems(items, indexValue);
             }
+            Logger::Log("Ending retrieved handler");
+        });
 
-            // send notification and don't display the item (implied by notification)
-            Archipelago::SendInGameNotification(receivedItemsNotification);
-            Archipelago::GivePlayerItem(itemId, false);
+        // std::list<std::string> indexList = {"index"};
+        if (ap->Get({"index"})) {
+            Logger::Log("successfully invoked get");
         }
-
-        Logger::Log("Saving last item index");
-        auto lastItem = items.back();
-        lastReceivedItemIndex_ = lastItem.index;
     });
 
     ap->set_data_package_changed_handler(

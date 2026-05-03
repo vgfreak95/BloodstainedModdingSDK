@@ -39,13 +39,12 @@ bool GameManager::IsInstanceValid(SDK::UObject* object, const char* c_str) {
 
 bool GameManager::IsPlayerLoadedInGame() {
     auto playerController = GameManager::Instance().PlayerController();
-    if (playerController) {
-        auto playerControllerName = playerController->GetName();
-        if (playerControllerName == "PBTitlePlayerController_C_0")
-            return false;
-        else if (playerControllerName == "PBPlayerController_0")
-            return true;
-    }
+    if (!playerController) return false;
+    auto playerControllerName = playerController->GetName();
+    if (playerControllerName != "PBPlayerController_0") return false;
+    auto player = (SDK::APB_Chr_PlayerRoot_C*)playerController->Pawn;
+    if (!SDK::UKismetSystemLibrary::IsValid(player)) return false;
+    return true;
 }
 
 bool GameManager::PopulateDisplayToItemIdTable() {
@@ -63,6 +62,8 @@ bool GameManager::PopulateDisplayToItemIdTable() {
         std::string displayName = itemData.Name.ToString();
         DisplayNameToItemId[displayName] = itemId;
     }
+    // Fixes since this doesn't work with somethings
+    // DisplayNameToItemId["8-bit Nightmare"] = "Nightmare8Bit";
     return true;
 }
 
@@ -90,7 +91,10 @@ bool GameManager::PostInit() {
     // Wait for the player to load in
     if (!GameManager::Instance().IsPlayerLoadedInGame()) return false;
     // ProcessNamePool();
+    Logger::Log("Populated Display Table");
+    Sleep(200);
     ThreadQueue::Instance().Enqueue([this] { GameManager::Instance().PopulateDisplayToItemIdTable(); });
+    //GameManager::Instance().PopulateDisplayToItemIdTable();
     Logger::Log(DisplayNameToItemId["Knife"]);
     Logger::Log("Game Manager POST initialized successfully");
     postInitCompleted = true;
@@ -259,10 +263,6 @@ void GameManager::GivePlayerItem(const std::string& name, bool shouldDisplay) {
 
     ThreadQueue::Instance().Enqueue([&itemData, itemName, inventory, shouldDisplay, name]() {
         auto instance = (SDK::UPBGameInstance*)GameManager::Instance().GameInstance();
-        auto str = FStringFromString("ITEM_NAME_Headband");
-        auto value = instance->pStringManager->GetStringFromKey(SDK::EPBStringTables::Master, str);
-
-        Logger::Log(value.ToString());
         inventory->GetItemWithDisplay(itemName, 1, shouldDisplay);
     });
 }

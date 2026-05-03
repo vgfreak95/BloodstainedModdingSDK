@@ -3,8 +3,10 @@
 
 #include <Chr_P0000_classes.hpp>
 #include <Engine_classes.hpp>
+#include <PB_Chr_PlayerRoot_classes.hpp>
 #include <PB_Chr_Root_classes.hpp>
 #include <ProjectBlood_structs.hpp>
+#include <Step_P0000_classes.hpp>
 #include <UMG_classes.hpp>
 #include <UnrealContainers.hpp>
 
@@ -64,22 +66,31 @@ bool HookManager::Init() {
         return false;
     }
 
+    // When game and player completely load in
+    NotifyOnClassFunction("PBGameMode_Miriam_BP_C", "OnLoadGameCompletely", [](void* obj) {
+        GameManager::Instance().PlayerAlive();
+        APBridge::Instance().EnqueueSync();
+        Logger::Log("Player respawned");
+    });
+
     Logger::Log("HookManager initialized successfully");
     return true;
 }
 
 bool HookManager::PostInit() {
     // When player dies
-    NotifyOnClassFunction("PBGameMode_BP_C", "OnGameOver", [](void* obj) {
+    NotifyOnClassFunction("Chr_P0000_C", "Kill", [](void* obj) {
         GameManager::Instance().PlayerDied();
-        Logger::Log("Player respawned");
+        Logger::Log("Player died");
     });
 
     // When player returns to title screen
+    // IMPORTANT: Also when player dies and loading screen occurs, the title gets created for whatever reason
     NotifyOnClassFunction("PBTitlePlayerController_C", "ClientRestart", [](void* obj) {
         if (!GameManager::Instance().IsPlayerDead()) {
-            Archipelago::Instance().ResetLocalIndex();
+            Archipelago::ConnectedInstance()->ResetLocalIndex();
             APBridge::Instance().EnqueueDisconnect();
+            sentLocationChecks.clear();
         }
         Logger::Log("Returned to title");
     });
@@ -95,17 +106,11 @@ bool HookManager::PostInit() {
         Logger::Log("Changed rooms:", currentRoomId);
     });
 
-    // When player dies and respawns
-    NotifyOnClassFunction("PBPlayerController", "ClientRestart", [](void* obj) {
-        GameManager::Instance().PlayerAlive();
-        APBridge::Instance().EnqueueSync();
-        Logger::Log("Player respawned");
-    });
-
     // When player saves
     NotifyOnClassFunction("PBGameInstanceBP_C", "OnSaveStoryDataCompletedDelegates_Event_0", [](void* obj) {
         Logger::Log("Player saved game");
-        Archipelago::Instance().SetFileLastIndex();
+        Archipelago::ConnectedInstance()->UpdateServerLastIndex();
+        sentLocationChecks.clear();
     });
 
     // When the shard that comes out of the enemy appears
@@ -118,40 +123,13 @@ bool HookManager::PostInit() {
         auto roomId = roomManager->GetCurrentRoomId().ToString();
 
         // Don't allow in tutorial room because softlock :/
-        if (roomId != "m01SIP_000" && instance().RoomIsBossRoom(roomId)) {
+        if (roomId != "m01SIP_000" && !instance().RoomIsBossRoom(roomId)) {
             instance().GivePlayerItem(shardBase->ShardId.ToString());
             ((SDK::AActor*)(shardBase))->K2_DestroyActor();
         }
-
-        // Check if player is softlocked
-        // GameManager::Instance().CheckBossSoftlock();
     });
 
-    // Code below I may need in the future :/
-    // Future here, yeah I needed it
-
-    // NotifyOnClassFunction("Chr_P0000_C", "GetAdditionalCameraTargetLocations", [](void* obj) {
-    //     Logger::Log("Tick from player");
-    //     Logger::Log(tickCount);
-    //     if (++tickCount % 30 != 0) return;
-    //     tickCount = 0;
-    //
-    //     auto* player = static_cast<SDK::AChr_P0000_C*>(obj);
-    //     if (!player || !player->CharacterInventory) return;
-    //
-    //     for (SDK::FPBItemCatalogData& item : player->CharacterInventory->myKeyItems) {
-    //         std::string itemId = item.ID.ToString();
-    //         if (!itemId.starts_with("AP_")) continue;
-    //         Archipelago::Instance().SendLocationChecks(itemId.substr(3));
-    //     }
-    //     // auto* uobj = static_cast<SDK::UObject*>(obj);
-    //     // auto name = uobj->GetName();  // Use GetName to match what Tick uses
-    //     // Logger::Log("[ItemGetPopup] Construct: ", name);
-    //     // pendingWidgets.insert(name);
-    //     // auto player = (SDK::AChr_P0000_C*)GameManager::Instance().Player();
-    //     // SDK::UPBCharacterInventoryComponent* comp = player->CharacterInventory;
-    // });
-
+    // When the item popup in bottom right corner appears
     NotifyOnClassFunction("ItemGetPopup_C", "Tick", [](void* obj) {
         auto* popup = static_cast<SDK::UItemGetPopup_C*>(obj);
         std::string popupText = popup->MLTF_SIZE_23_ItemName->text.ToString();
@@ -162,116 +140,9 @@ bool HookManager::PostInit() {
         if (sentLocationChecks.count(locationId)) return;
 
         sentLocationChecks.insert(locationId);
-        Archipelago::Instance().SendLocationChecks(locationId);
+        Archipelago::ConnectedInstance()->SendLocationChecks(locationId);
         Logger::Log("[ItemGetPopup] Sending location check:", locationId);
     });
-
-    // When item display in bottom left corner is constructed
-    // NotifyOnClassFunction("ItemGetPopup_C", "Construct", [](void* obj) {
-    //     auto* uobj = static_cast<SDK::UObject*>(obj);
-    //     auto name = uobj->GetName();  // Use GetName to match what Tick uses
-    //     Logger::Log("[ItemGetPopup] Construct: ", name);
-    //     pendingWidgets.insert(name);
-    // });
-    //
-    // // When item display in bottom left corner is being shown to player
-    // NotifyOnClassFunction("ItemGetPopup_C", "Tick", [](void* obj) {
-    //     auto* uobj = static_cast<SDK::UObject*>(obj);
-    //     auto name = uobj->GetName();
-    //
-    //     if (pendingWidgets.find(name) == pendingWidgets.end()) return;
-    //
-    //     // get text of popup
-    //     auto* popup = static_cast<SDK::UItemGetPopup_C*>(obj);
-    //     std::string popupText = popup->MLTF_SIZE_23_ItemName->text.ToString();
-    //
-    //     // Check if AP Item
-    //     if (!popupText.starts_with("AP_")) {
-    //         pendingWidgets.erase(name);
-    //         processedWidgets.insert(name);
-    //         return;
-    //     };
-    //
-    //     if (popup->MLTF_SIZE_23_ItemName && popup->MLTF_SIZE_23_ItemName->text.TextData) {
-    //         // DropItemID Name
-    //         std::string dropItemId = popupText.substr(3);
-    //         pendingWidgets.erase(name);
-    //         processedWidgets.insert(name);
-    //         Logger::Log("[ItemGetPopup] Item received: ", popupText);
-    //         Logger::Log("Processing dropItemId:", dropItemId);
-    //         Archipelago::Instance().SendLocationChecks(dropItemId);
-    //     }
-    //     Sleep(500);
-    // });
-
-    // When player opens treasure box (unused)
-    // NotifyOnClassFunction(
-    //     "PBEasyTreasureBox_BP_C",
-    //     "BndEvt__PBET_OnInteractBox_K2Node_ComponentBoundEvent_4_PBETDelegate_OnInteract__DelegateSignature",
-    //     [](void* obj) {
-    //         SDK::FName* dropItemId = reinterpret_cast<SDK::FName*>(static_cast<uint8_t*>(obj) + 0x6F8);
-    //         std::string dropItemIdStr = dropItemId->ToString();
-    //
-    //         Logger::Log("Opening chest: ", dropItemIdStr);
-    //         // Archipelago::Instance().SendLocationChecksForChest(dropItemIdStr);
-    //     });
-
-    // When level loads and chest is detected (unused)
-    // NotifyOnClassFunction("PBEasyTreasureBox_BP_C", "OnLevelLoaded", [](void* obj) {
-    //     auto treasure = reinterpret_cast<SDK::APBBronzeTreasureBox_BP_C*>(obj);
-    //     auto droppedItems = (SDK::TArray<SDK::FPBDroppedItem>)(treasure->DroppedItems);
-    //
-    //     Logger::Log("Level loaded for treasurechest:", treasure->DropItemID.ToString());
-    //     for (auto item : droppedItems) {
-    //         Logger::Log(item.ItemID.ToString());
-    //     }
-    // });
-
-    // When player collects MaxHP (unused)
-    // NotifyOnClassFunction(
-    //     "HPMaxUp_C",
-    //     "BndEvt__PBET_OnOverlapPCBox_K2Node_ComponentBoundEvent_0_PBETDelegate_OnOverlapPC__DelegateSignature",
-    //     [](void* obj) {
-    //         SDK::UObject* uobj = (SDK::UObject*)obj;
-    //
-    //         auto hasCollected = reinterpret_cast<bool*>(reinterpret_cast<uint8_t*>(obj) + 0x7C4);
-    //         Logger::Log("Player has collected:", hasCollected);
-    //         Logger::Log("Player has collected:", *hasCollected);
-    //
-    //         auto roomManager = GameManager::Instance().RoomManager();
-    //         std::string formatted = uobj->GetName() + "." + roomManager->GetCurrentRoomId().ToString();
-    //         Logger::Log("Picked up:", formatted);
-    //     });
-
-    // When player collects MaxMP (unused)
-    // NotifyOnClassFunction(
-    //       "MPMaxUp_C",
-    //       "BndEvt__PBET_OnOverlapPCBox_K2Node_ComponentBoundEvent_0_PBETDelegate_OnOverlapPC__DelegateSignature",
-    //       [](void* obj) {
-    //           SDK::UObject* uobj = (SDK::UObject*)obj;
-    //           auto hasCollected = reinterpret_cast<bool*>(reinterpret_cast<uint8_t*>(obj) + 0x7C4);
-    //           Logger::Log("Player has collected:", hasCollected);
-    //           Logger::Log("Player has collected:", *hasCollected);
-    //
-    //           auto roomManager = GameManager::Instance().RoomManager();
-    //           std::string formatted = uobj->GetName() + "." + roomManager->GetCurrentRoomId().ToString();
-    //           Logger::Log("Picked up:", formatted);
-    //       });
-
-    // When player collects MaxCapacity (unused)
-    // NotifyOnClassFunction(
-    //       "BulletMaxUp_C",
-    //       "BndEvt__PBET_OnOverlapPCBox_K2Node_ComponentBoundEvent_0_PBETDelegate_OnOverlapPC__DelegateSignature",
-    //       [](void* obj) {
-    //           SDK::UObject* uobj = (SDK::UObject*)obj;
-    //           auto hasCollected = reinterpret_cast<bool*>(reinterpret_cast<uint8_t*>(obj) + 0x7C4);
-    //           Logger::Log("Player has collected:", hasCollected);
-    //           Logger::Log("Player has collected:", *hasCollected);
-    //
-    //           auto roomManager = GameManager::Instance().RoomManager();
-    //           std::string formatted = uobj->GetName() + "." + roomManager->GetCurrentRoomId().ToString();
-    //           Logger::Log("Picked up:", formatted);
-    //       });
 
     Logger::Log("HookManager post initialized successfully");
     return true;

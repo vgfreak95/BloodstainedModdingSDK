@@ -4,10 +4,10 @@
 #include "Logger.h"
 #include "Mod/APBridge.h"
 #include "Mod/Archipelago.h"
-#include "NotifyObject.h"
-#include "ThreadQueue.h"
-#include "SDK.hpp"
 #include "Mod/GameManager.h"
+#include "NotifyObject.h"
+#include "SDK.hpp"
+#include "ThreadQueue.h"
 
 extern "C" {
 #include "MinHook.h"
@@ -63,14 +63,12 @@ class HookManager {
             ThreadQueue::Instance().Flush();
         }
         if (GameManager::Instance().IsInitialized() && !GameManager::Instance().IsPlayerDead()) {
-			APBridge::Instance().ProcessPending();
-			Archipelago::Instance().Poll();
+            APBridge::Instance().ProcessPending();
+            Archipelago::Instance().Poll();
         }
 
         notifyObject.OnProcessEvent(obj, className, funcName, params);
     }
-
-    void PleaseWork() { Logger::Log("Please work..."); }
 
     static void HOOKED_ProcessEvent(SDK::UObject* obj, SDK::UFunction* func, void* params) {
         originalProcessEvent(obj, func, params);

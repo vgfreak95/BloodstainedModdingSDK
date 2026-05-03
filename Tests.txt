@@ -1,0 +1,20 @@
+Death Tests:
+  1. player shouldn't disconnect from AP Client
+  2. On respawn should recieve items from AP Server that were lost from recievedItemspacket
+  3. player shouldn't crash when recieving items on respawn
+
+Connection Tests:
+  1. disconnecting in game and reconnecting should not give the player duplicate items
+  2. when player connects, ensure server index is recieved.
+
+Solo Game tests:
+  1. Load in game, connect to AP Server, open chest, and ensure items are collected from AP Location
+  2. Step 1 then, return to title screen and Step 1 again
+  3. When player saves, ensure server index is properly set
+  4. Ensure getitems sends the player items
+  5. Bosses shouldn't softlock, just test clockwork
+
+
+- "8-bit Nightmare" doesn't show up ingame when collected but does in show up in the text client (If it's supposed to show up in your inventory you don't receive it at all)
+- Treasurebox_ENT002_2 does not send checks (red chest vanilla)
+- It feels like the foodbug occurs when you press back (b button for me) right after eating the Food - like being too fast? Might be a vanilla "issue"?

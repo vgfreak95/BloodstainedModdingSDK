@@ -13,17 +13,10 @@ the SDK will function on other platforms.
 
 ## Installation:
 1. Go to Releases, and grab the latest `.dll` file and drag into your Game Shipping Directory.
-2. Launch the Game, and press F2 to open the ImGui window in game. Explore the Gui to your hearts content and add more custom inside `Mod\Gui.cpp`.
+2. Launch the Game, and press `F5` to open the ImGui window in game. Explore the Gui to your hearts content and add more custom inside `Mod\Gui.cpp`.
 
 ## Archipelago:
-1. Download [Lakifume's True Randomizer](https://github.com/Lakifume/True-Randomization/releases/latest)
-2. Open `Data/config.ini` and find `[Archipelago]` and change `bEnable` from `false` to `true`.
-3. Open the True Randomizer, and in the bottom left, select `Empty preset`.
-4. Change the Game Difficulty in the bottom left.
-5. Then press the `Generate` button. Generating adds AP specific assets into the game which the AP Mod reads from.
-6. Go to your Game Shipping Directory and remove `UE4SS.dll` and ensure `version.dll` is in the directory.
-7. Launch game and load a new save file, once loaded, press `F2` to open ImGui window.
-8. Insert the correct archipelago information and press connect!
+Instructions can be found here: [Archipelago Setup Guide for Bloodstained: Ritual of the Night](https://github.com/vgfreak95/BloodstainedAP/blob/bloodstained/worlds/bloodstained_rotn/docs/setup_en.md)
 
 ## Building from Source:
 

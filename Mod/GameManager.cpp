@@ -64,6 +64,7 @@ bool GameManager::PopulateDisplayToItemIdTable() {
     }
     // Fixes since this doesn't work with somethings
     // DisplayNameToItemId["8-bit Nightmare"] = "Nightmare8Bit";
+    // DisplayNameToItemId["8-bit Coin] = "8BitCoin"
     return true;
 }
 

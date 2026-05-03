@@ -174,12 +174,16 @@ void Archipelago::GivePlayerItem(std::string& itemName, bool shouldDisplay) {
     if (itemName.starts_with("Max")) {
         GameManager::Instance().GivePlayerMaxStatItem(itemName, shouldDisplay);
         return;
-    }
-    if (std::isdigit(itemName[0])) {
+    //} else if (itemName.starts_with("8-bit") || itemName.starts_with("16-bit") || itemName.starts_with("32-bit")) {
+    //} else if (itemName.starts_with("8-bit")) {
+    //    GameManager::Instance().GivePlayerItem(itemName.c_str(), shouldDisplay); 
+    //    return;
+    } else if (std::isdigit(itemName[0]) && !itemName.starts_with("8") && !itemName.starts_with("16") && !itemName.starts_with("32")) {
         int amount = std::stoi(itemName.substr(0, itemName.size() - 1));
         GameManager::Instance().GivePlayerCoin(amount, shouldDisplay);
         return;
     }
+
     auto displayName = GameManager::Instance().GetIdFromDisplayName(itemName);
     if (displayName.has_value()) {
         GameManager::Instance().GivePlayerItem(displayName.value(), shouldDisplay);

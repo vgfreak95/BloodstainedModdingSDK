@@ -16,21 +16,7 @@ the SDK will function on other platforms.
 2. Launch the Game, and press `F5` to open the ImGui window in game. Explore the Gui to your hearts content and add more custom inside `Mod\Gui.cpp`.
 
 ## Archipelago:
-1. Download [Lakifume's True Randomizer](https://github.com/Lakifume/True-Randomization/releases/latest)
-2. Open `Data/config.ini` and find `[Archipelago]` and change `bEnable` from `false` to `true`.
-3. Open the True Randomizer, and in the bottom left, select `Empty preset`.
-4. Change the Game Difficulty in the bottom left.
-5. Then press the `Generate` button. Generating adds AP specific assets into the game which the AP Mod reads from.
-6. Go to your Game Shipping Directory and remove `UE4SS.dll` and ensure `version.dll`, `dwmapi.dll`, and `UE4SS.dll` is in the directory.
-7. In the Game Shipping Directory, open `UE4SS-settings.ini` in notepad or equivalent and change the [Debug] section to be exactly like this:
-   [Debug]
-  ; Whether to enable the external UE4SS debug console.
-  ConsoleEnabled = 0
-  GuiConsoleEnabled = 0
-  GuiConsoleVisible = 0
-9. Launch game and load a new save file, once loaded, press `F5` to open ImGui window.
-10. In game, ensure the minimap has a green outline to it. If not, repeat steps 6 to 9.
-11. Insert the correct archipelago information and press connect!
+Instructions can be found here: [Archipelago Setup Guide for Bloodstained: Ritual of the Night](https://github.com/vgfreak95/BloodstainedAP/blob/bloodstained/worlds/bloodstained_rotn/docs/setup_en.md)
 
 ## Building from Source:
 

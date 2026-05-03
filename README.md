@@ -13,7 +13,7 @@ the SDK will function on other platforms.
 
 ## Installation:
 1. Go to Releases, and grab the latest `.dll` file and drag into your Game Shipping Directory.
-2. Launch the Game, and press F2 to open the ImGui window in game. Explore the Gui to your hearts content and add more custom inside `Mod\Gui.cpp`.
+2. Launch the Game, and press F5 to open the ImGui window in game. Explore the Gui to your hearts content and add more custom inside `Mod\Gui.cpp`.
 
 ## Archipelago:
 1. Download [Lakifume's True Randomizer](https://github.com/Lakifume/True-Randomization/releases/latest)

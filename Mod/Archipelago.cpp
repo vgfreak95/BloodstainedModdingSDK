@@ -13,6 +13,7 @@
 #include <cstdint>
 #include <fstream>
 #include <iostream>
+#include <map>
 #include <memory>
 #include <nlohmann/json.hpp>
 #include <vector>
@@ -162,6 +163,13 @@ void Archipelago::SetFileLastIndex() {
     }
 }
 
+// Calls UpdateServerLastIndex -> UpdateServerLastIndex -> callback
+void Archipelago::UpdateServerLastIndex() {
+    std::string key = "lastIndex";
+    json defaultValue = {{"index", -1}};
+    // if (ap->Get()) ap->Set(&key, &defaultValue, false, nullptr);
+}
+
 std::string Archipelago::GetStateAsString() {
     auto state = Archipelago::Instance().GetConnectionState();
     switch (state) {
@@ -186,7 +194,9 @@ std::string Archipelago::GetStateAsString() {
 
 void Archipelago::BaelDefeated() {
     auto goalStatus = APClient::ClientStatus::GOAL;
-    if (ap) ap->StatusUpdate(goalStatus);
+    if (ap) {
+        ap->StatusUpdate(goalStatus);
+    }
 }
 
 void Archipelago::GivePlayerItem(std::string& itemName, bool shouldDisplay) {
@@ -266,6 +276,10 @@ bool Archipelago::Connect(const std::string& slotName, const std::string& passwo
         }
     });
 
+    ap->set_retrieved_handler([this](const std::map<std::string, json>& data) { 
+        Logger::Log("Hello"); 
+    });
+
     ap->set_items_received_handler([this](const std::list<APClient::NetworkItem>& items) {
         if (!ap->is_data_package_valid()) {
             if (!ap_sync_queued) ap->Sync();
@@ -274,6 +288,16 @@ bool Archipelago::Connect(const std::string& slotName, const std::string& passwo
         }
 
         int lastIndex = GetFileLastIndex();
+        std::list<std::string> indexList = {"index"};
+        if (ap->Get(indexList)) {
+            Logger::Log("successfully invoked get");
+            // check last index
+        }
+        // ap->Get("");
+
+        // std::string key = "lastIndex";
+        // json defaultValue = {{"index", -1}};
+        // if (ap->Get()) ap->Set(&key, &defaultValue, false, nullptr);
 
         for (const auto& item : items) {
             Logger::Log("[AP] Item - player:", item.player, " location:", item.location, " item:", item.item);

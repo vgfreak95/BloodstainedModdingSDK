@@ -42,6 +42,7 @@ class Archipelago {
     void BaelDefeated();
     void ResetLocalIndex() { lastReceivedItemIndex_ = -1; };
     void SetFileLastIndex();
+    void UpdateServerLastIndex();
 
    private:
     void AbortPassword();

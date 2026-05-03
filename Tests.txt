@@ -1,0 +1,9 @@
+
+When player dies:
+  1. player shouldn't disconnect from AP Client
+  2. On respawn should recieve items from AP Server that were lost
+
+When player returns to title: player should disconnect from AP Client
+
+When player saves: Global index should be updated to clients lastrecievedindex;
+

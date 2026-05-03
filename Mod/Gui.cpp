@@ -1,6 +1,9 @@
 #pragma once
 #include "Gui.h"
 
+#include <PB_Chr_PlayerRoot_classes.hpp>
+#include <Step_P0000_classes.hpp>
+
 #include "APBridge.h"
 #include "Archipelago.h"
 #include "GameManager.h"
@@ -69,11 +72,12 @@ static void RenderArchipelagoPanel() {
         ImGui::InputText("##Password", s_Password, IM_ARRAYSIZE(s_Password), ImGuiInputTextFlags_Password);
 
         if (ImGui::Button("Connect")) {
-#ifdef _DEBUG
-            std::string uri = std::string("ws://") + s_Host + ":" + s_Port;
-#else
-            std::string uri = std::string("wss://") + s_Host + ":" + s_Port;
-#endif
+            std::string uri = "";
+            if (strcmp(s_Host, "localhost") == 0 || strcmp(s_Host, "127.0.0.1") == 0) {
+                uri = std::string("ws://") + s_Host + ":" + s_Port;
+            } else {
+                uri = std::string("wss://") + s_Host + ":" + s_Port;
+            }
 
             if (s_SlotName[0] != '\0') {
                 Logger::Log("Tried to connect to AP");
@@ -142,6 +146,11 @@ static void RenderDebugInfoPanel() {
                 Logger::Log("Warping player");
                 instance->pRoomManager->Warp(startName, false, false, noneName, {0, 0, 0, 0});
             });
+        }
+
+        if (ImGui::Button("Kill Player")) {
+            auto player = static_cast<SDK::APB_Chr_PlayerRoot_C*>(GameManager::Instance().Player());
+            ThreadQueue::Instance().Enqueue([player] { player->Kill(); });
         }
     }
     ImGui::Spacing();
@@ -224,8 +233,8 @@ bool Gui::InitImGui(IDXGISwapChain* swapChain) {
 void Gui::Render() {
     if (m_IsResizing) return;
 
-    // Check for F2 key to toggle menu
-    if (GetAsyncKeyState(VK_F2) & 1) {
+    // Check for F5 key to toggle menu
+    if (GetAsyncKeyState(VK_F5) & 1) {
         m_Open = !m_Open;
     }
 

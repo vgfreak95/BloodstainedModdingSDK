@@ -96,9 +96,9 @@ DWORD APIENTRY MainThread(HMODULE Module) {
     Gui::Instance().Init();
     if (!InitKieroAndHook()) return 0;
 
-    while (!GameManager::Instance().PostInit()) Sleep(500);
+    while (!GameManager::Instance().PostInit()) Sleep(100);
 
-    while (!HookManager::Instance().PostInit()) Sleep(500);
+    while (!HookManager::Instance().PostInit()) Sleep(100);
 
     Logger::Log("Ready to Game!");
 

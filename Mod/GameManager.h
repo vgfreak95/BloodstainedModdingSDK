@@ -93,7 +93,7 @@ class GameManager {
     bool postInitCompleted;
     bool isPlayerDead = false;
     const std::unordered_set<std::string> bossRooms = {
-        "m01SIP_000", "m09TRN_002", "m07LIB_011", "m08TWR_019", "m05SAN_023", "m18ICE_018",
+        "m01SIP_000", "m09TRN_002", "m07LIB_011", "m08TWR_019", "m05SAN_023", "m18ICE_018", "m05SAN_012",
     };
     std::unordered_map<std::string, std::string> DisplayNameToItemId;
 };

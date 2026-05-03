@@ -88,8 +88,9 @@ bool HookManager::PostInit() {
     // IMPORTANT: Also when player dies and loading screen occurs, the title gets created for whatever reason
     NotifyOnClassFunction("PBTitlePlayerController_C", "ClientRestart", [](void* obj) {
         if (!GameManager::Instance().IsPlayerDead()) {
-            Archipelago::Instance().ResetLocalIndex();
+            Archipelago::ConnectedInstance()->ResetLocalIndex();
             APBridge::Instance().EnqueueDisconnect();
+            sentLocationChecks.clear();
         }
         Logger::Log("Returned to title");
     });
@@ -108,7 +109,8 @@ bool HookManager::PostInit() {
     // When player saves
     NotifyOnClassFunction("PBGameInstanceBP_C", "OnSaveStoryDataCompletedDelegates_Event_0", [](void* obj) {
         Logger::Log("Player saved game");
-        Archipelago::Instance().SetFileLastIndex();
+        Archipelago::ConnectedInstance()->UpdateServerLastIndex();
+        sentLocationChecks.clear();
     });
 
     // When the shard that comes out of the enemy appears
@@ -119,7 +121,6 @@ bool HookManager::PostInit() {
         auto instance = GameManager::Instance;
         auto roomManager = instance().RoomManager();
         auto roomId = roomManager->GetCurrentRoomId().ToString();
-        auto player = (SDK::APB_Chr_PlayerRoot_C*)instance().Player();
 
         // Don't allow in tutorial room because softlock :/
         if (roomId != "m01SIP_000" && !instance().RoomIsBossRoom(roomId)) {
@@ -139,7 +140,7 @@ bool HookManager::PostInit() {
         if (sentLocationChecks.count(locationId)) return;
 
         sentLocationChecks.insert(locationId);
-        Archipelago::Instance().SendLocationChecks(locationId);
+        Archipelago::ConnectedInstance()->SendLocationChecks(locationId);
         Logger::Log("[ItemGetPopup] Sending location check:", locationId);
     });
 

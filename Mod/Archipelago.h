@@ -1,4 +1,5 @@
 #pragma once
+#include <apclient.hpp>
 #include <fstream>
 #include <set>
 #include <string>
@@ -16,6 +17,7 @@ enum class ArchipelagoConnectionState {
 class Archipelago {
    public:
     static Archipelago& Instance();
+    static Archipelago* ConnectedInstance();
 
     Archipelago();
     ~Archipelago();
@@ -41,7 +43,6 @@ class Archipelago {
 
     void BaelDefeated();
     void ResetLocalIndex() { lastReceivedItemIndex_ = -1; };
-    void SetFileLastIndex();
     void UpdateServerLastIndex();
 
    private:
@@ -52,8 +53,7 @@ class Archipelago {
     // General Management Actions
     void GivePlayerItem(std::string& itemName, bool shouldDisplay = true);
     void SendInGameNotification(std::string notification);
-
-    int GetFileLastIndex();
+    void GiveReceivedItems(const std::list<APClient::NetworkItem>& items, int64_t lastIndex);
 
     ArchipelagoConnectionState state_;
     std::string slotName_;
@@ -66,9 +66,9 @@ class Archipelago {
     double retryInterval_;
     int maxRetries_;
     int retryCount_;
-    std::fstream indexFile;
 
     std::set<int64_t> missingLocations_;
     std::set<int64_t> checkedLocations_;
     int64_t lastReceivedItemIndex_ = -1;
+    bool queueLastIndexReset_ = false;
 };

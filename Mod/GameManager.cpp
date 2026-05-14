@@ -1,13 +1,9 @@
 #pragma once
 #include "GameManager.h"
 
-#include <stringapiset.h>
-
 #include <Basic.hpp>
-#include <CoreUObject_structs.hpp>
-#include <DataLoadList_classes.hpp>
-#include <ItemGetPopup_classes.hpp>
 #include <PBInterfaceHUDBP_classes.hpp>
+#include <PB_Chr_PlayerRoot_classes.hpp>
 #include <PB_Chr_Root_classes.hpp>
 #include <ProjectBlood_classes.hpp>
 #include <ProjectBlood_structs.hpp>
@@ -50,21 +46,23 @@ bool GameManager::IsPlayerLoadedInGame() {
 bool GameManager::PopulateDisplayToItemIdTable() {
     auto itemTable = SDK::UPBDataTableManager::GetLoadedDataTable(SDK::EPBDataTables::ItemMaster);
     auto inventory = GameManager::Instance().Player()->CharacterInventory;
+    auto text = SDK::UKismetTextLibrary::Conv_StringToText(FStringFromString("ahhhhhh"));
+    // SDK::FPBItemCatalogData* realItemData = (SDK::FPBItemCatalogData*)pair.Value();
 
     for (auto& pair : itemTable->RowMap) {
+        pair.Value();
         std::string itemId = pair.Key().ToString();
         auto itemName = FNameFromString(itemId);
         SDK::FPBItemCatalogData itemData = SDK::FPBItemCatalogData();
+
         inventory->GetItemDataById(itemName, &itemData);
         if (itemData.Name.ToString().empty()) continue;
         if (itemData.Name.ToString().starts_with("AP_")) continue;
+        if (DisplayNameToItemId.count(itemData.Name.ToString()) >= 1) continue;
 
         std::string displayName = itemData.Name.ToString();
         DisplayNameToItemId[displayName] = itemId;
     }
-    // Fixes since this doesn't work with somethings
-    // DisplayNameToItemId["8-bit Nightmare"] = "Nightmare8Bit";
-    // DisplayNameToItemId["8-bit Coin] = "8BitCoin"
     return true;
 }
 
@@ -95,7 +93,7 @@ bool GameManager::PostInit() {
     Logger::Log("Populated Display Table");
     Sleep(200);
     ThreadQueue::Instance().Enqueue([this] { GameManager::Instance().PopulateDisplayToItemIdTable(); });
-    //GameManager::Instance().PopulateDisplayToItemIdTable();
+    // GameManager::Instance().PopulateDisplayToItemIdTable();
     Logger::Log(DisplayNameToItemId["Knife"]);
     Logger::Log("Game Manager POST initialized successfully");
     postInitCompleted = true;
@@ -108,27 +106,28 @@ void GameManager::CheckBossSoftlock() {
     Logger::Log("Softlock fix triggered");
     auto instance = (SDK::UPBGameInstance*)GameManager::Instance().GameInstance();
     auto currentBoss = instance->CurrentBoss;
+    auto roomId = instance->pRoomManager->GetCurrentRoomId();
 
     if (currentBoss) {
         std::string boss = currentBoss->GetBossId().ToString();
-        if ((boss == "N1003" || boss == "N2001" || boss == "N2013") && currentBoss->GetHitPoint() <= 0) {
+        if (!boss.empty() && currentBoss->GetHitPoint() <= 0) {
             ThreadQueue::Instance().Enqueue([currentBoss]() { currentBoss->EndBossBattle(true); });
+            currentBoss->EndBossBattle(true);
         }
-        if (boss != "N2001") return;
-        Sleep(2000);
-        ThreadQueue::Instance().Enqueue([]() {
-            auto instance = (SDK::UPBGameInstance*)GameManager::Instance().GameInstance();
-            std::string none = "None";
-            std::wstring wideName(none.begin(), none.end());
-            auto noneName = SDK::UKismetStringLibrary::Conv_StringToName(wideName.c_str());
+        if (!GameManager::Instance().RoomIsBossRoom(roomId.ToString())) return;
 
-            std::string warpRoom = "m09TRN_003";
-            std::wstring wideRoomName(warpRoom.begin(), warpRoom.end());
-            auto warpName = SDK::UKismetStringLibrary::Conv_StringToName(wideName.c_str());
-            Sleep(2000);
-            Logger::Log("Warping player");
-            instance->pRoomManager->Warp(warpName, false, false, noneName, {0, 0, 0, 0});
-        });
+        auto nextRoom = GameManager::Instance().GetNextRoomFromBossRoomId(roomId.ToString());
+        if (nextRoom.empty()) return;
+
+        std::wstring nextRoomWideName(nextRoom.begin(), nextRoom.end());
+        auto nextRoomName = SDK::UKismetStringLibrary::Conv_StringToName(nextRoomWideName.c_str());
+
+        std::string none = "None";
+        std::wstring wideName(none.begin(), none.end());
+        auto noneName = SDK::UKismetStringLibrary::Conv_StringToName(wideName.c_str());
+
+        SDK::FLinearColor blackFade = {0.0f, 0.0f, 0.0f, 1.0f};
+        instance->pRoomManager->Warp(nextRoomName, true, true, noneName, blackFade);
     }
 }
 
@@ -242,7 +241,38 @@ std::optional<SDK::FPBItemCatalogData> GameManager::CheckAllInventories(const st
     return std::nullopt;
 }
 
-void GameManager::GivePlayerItem(const std::string& name, bool shouldDisplay) {
+bool GameManager::ItemHasItemCategory(const std::string& itemName, SDK::ECarriedCatalog category) {
+    SDK::UPBGameInstance* inst = (SDK::UPBGameInstance*)GameManager::Instance().GameInstance();
+    auto itemFName = FNameFromString(itemName);
+    auto player = GameManager::Instance().Player();
+    auto inventory = player->CharacterInventory;
+
+    SDK::FPBItemCatalogData itemData = SDK::FPBItemCatalogData();
+    inventory->GetItemDataById(itemFName, &itemData);
+
+    if (itemData.itemCategory == category) {
+        return true;
+    }
+
+    return false;
+}
+
+bool GameManager::ItemHasItemCategories(const std::string& itemName,
+                                        std::initializer_list<SDK::ECarriedCatalog> categories) {
+    SDK::UPBGameInstance* inst = (SDK::UPBGameInstance*)GameManager::Instance().GameInstance();
+    auto itemFName = FNameFromString(itemName);
+    auto inventory = GameManager::Instance().Player()->CharacterInventory;
+
+    SDK::FPBItemCatalogData itemData;
+    inventory->GetItemDataById(itemFName, &itemData);
+
+    for (auto cat : categories) {
+        if (itemData.itemCategory == cat) return true;
+    }
+    return false;
+}
+
+void GameManager::GivePlayerItem(const std::string& name, bool shouldDisplay, int count) {
     auto player = GameManager::Instance().Player();
     auto inventory = player->CharacterInventory;
     SDK::UPBGameInstance* inst = (SDK::UPBGameInstance*)GameManager::Instance().GameInstance();
@@ -262,8 +292,41 @@ void GameManager::GivePlayerItem(const std::string& name, bool shouldDisplay) {
         Logger::Log("Player has", itemInInventory->Num, "of", name);
     }
 
-    ThreadQueue::Instance().Enqueue([&itemData, itemName, inventory, shouldDisplay, name]() {
+    ThreadQueue::Instance().Enqueue([itemName, inventory, shouldDisplay, count]() {
         auto instance = (SDK::UPBGameInstance*)GameManager::Instance().GameInstance();
-        inventory->GetItemWithDisplay(itemName, 1, shouldDisplay);
+        inventory->GetItemWithDisplay(itemName, count, shouldDisplay);
+    });
+}
+
+bool GameManager::CanKillPlayer() {
+    auto instance = (SDK::UPBGameInstance*)(GameInstance());
+    auto player = (SDK::APB_Chr_PlayerRoot_C*)(Player());
+    auto controller = (SDK::APBPlayerController*)(PlayerController());
+    auto hud = controller->MyHUD;
+    ThreadQueue::Instance().Enqueue([this, instance, player, hud]() {
+        auto gamemodeType = instance->GetGameModeType();
+        if (gamemodeType == SDK::EPBGameModeType::Normal || gamemodeType == SDK::EPBGameModeType::RandomizerMode ||
+            gamemodeType == SDK::EPBGameModeType::SpeedRunMode)
+            return false;
+        if (!SDK::UKismetSystemLibrary::IsValid(instance->LoadingManagerInstance)) return false;
+        if (instance->LoadingManagerInstance->IsLoadingScreenVisible()) return false;
+        if (!IsPlayerLoadedInGame()) return false;
+        if (player->Killed) return false;
+        if (player->CurrentryWarpingByWarpRoom) return false;
+        if (!SDK::UKismetSystemLibrary::IsValid(hud)) return false;
+    });
+    return true;
+}
+
+void GameManager::KillPlayer() {
+    auto player = static_cast<SDK::APB_Chr_PlayerRoot_C*>(GameManager::Instance().Player());
+    ThreadQueue::Instance().Enqueue([player] { player->Kill(); });
+}
+
+void GameManager::GivePlayerStatusMultiplier(SDK::EPBEquipSpecialAttribute attribute, float multiplier) {
+    auto player = static_cast<SDK::APB_Chr_PlayerRoot_C*>(GameManager::Instance().Player());
+
+    ThreadQueue::Instance().Enqueue([this, player, attribute, multiplier]() {
+        player->CharacterInventory->SetSpecialAttribute(attribute, multiplier);
     });
 }

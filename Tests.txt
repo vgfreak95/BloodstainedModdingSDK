@@ -14,6 +14,10 @@ Solo Game tests:
   4. Ensure getitems sends the player items
   5. Bosses shouldn't softlock, just test clockwork
 
+  Starting Inventory Tests (assumes they have start inventory items):
+  - When player connects, give player starting inventory, on reconnection assuming player doesn't go to menu, don't give items
+  - When player connects, give player starting inventory, save game, reconnection should not give player starting inventory
+
 
 - "8-bit Nightmare" doesn't show up ingame when collected but does in show up in the text client (If it's supposed to show up in your inventory you don't receive it at all)
 - Treasurebox_ENT002_2 does not send checks (red chest vanilla)

@@ -53,14 +53,16 @@ class GameManager {
     bool IsInstanceValid(SDK::UObject* object, const char* str);
     bool PopulateDisplayToItemIdTable();
 
-    void GivePlayerItem(const std::string& name, bool shouldDisplay = true);
+    void GivePlayerItem(const std::string& name, bool shouldDisplay = true, int count = 1);
     void GivePlayerCoin(SDK::int32 amount, bool shouldDisplay = true);
     void GivePlayerMaxStatItem(std::string& maxStat, bool shouldDisplay = true);
-
+    void GivePlayerStatusMultiplier(SDK::EPBEquipSpecialAttribute attribute, float multiplier);
     std::optional<SDK::FPBItemCatalogData> PlayerHasItem(const SDK::TArray<SDK::FPBItemCatalogData>& itemsArray,
                                                          const std::string& itemName);
     std::optional<SDK::FPBItemCatalogData> CheckAllInventories(const std::string& itemName);
 
+    bool CanKillPlayer();
+    void KillPlayer();
     void SendInGameNotification(std::string notification, float iconId);
     bool IsPlayerDead() const { return isPlayerDead; };
     void PlayerDied() { isPlayerDead = true; };
@@ -71,7 +73,8 @@ class GameManager {
     void NotifyOnNewObject(const SDK::UObject* obj, SDK::UFunction* func, void* params);
     void ProcessEvent(const SDK::UObject* obj, SDK::UFunction* func, void* params);
     SDK::FName FindName(std::string name);
-
+    bool ItemHasItemCategory(const std::string& itemName, SDK::ECarriedCatalog category);
+    bool ItemHasItemCategories(const std::string& itemName, std::initializer_list<SDK::ECarriedCatalog> categories);
     bool IsPlayerLoadedInGame();
     SDK::FPBItemCatalogData* PlayerHasShard(SDK::FName shardId);
     std::unordered_map<std::string, UC::int32> NameLookup;
@@ -80,6 +83,15 @@ class GameManager {
                                                                 {500, SDK::EDropCoin::D500},
                                                                 {1000, SDK::EDropCoin::D1000},
                                                                 {2000, SDK::EDropCoin::D2000}};
+
+    std::string GetBossRoomIdFromBossName(const std::string& bossName) const { return BossNameToRoomId.at(bossName); };
+    std::string GetNextRoomFromBossRoomId(const std::string& roomId) const {
+        auto it = BossRoomIdToNextRoom.find(roomId);
+        return it != BossRoomIdToNextRoom.end() ? it->second : "";
+    }
+    bool IsRoomBossRoom(const std::string& roomId) { return bossRooms.contains(roomId); };
+    std::unordered_set<std::string> GetBossRooms() const { return bossRooms; };
+    std::unordered_set<std::string> GetBossNames() const { return bossNames; };
 
    private:
     GameManager() = default;
@@ -92,8 +104,26 @@ class GameManager {
     bool initCompleted;
     bool postInitCompleted;
     bool isPlayerDead = false;
+
     const std::unordered_set<std::string> bossRooms = {
-        "m01SIP_000", "m09TRN_002", "m07LIB_011", "m08TWR_019", "m05SAN_023", "m18ICE_018", "m05SAN_012",
+        "m01SIP_000", "m01SIP_022", "m09TRN_002", "m07LIB_011", "m08TWR_019", "m05SAN_023", "m18ICE_018", "m05SAN_012",
     };
+
+    const std::unordered_set<std::string> bossNames = {
+        "Vepar", "Clockwork", "Andrealphus", "Twin Dragons", "Bloodless", "Train", "Gremory",
+    };
+
+    const std::unordered_map<std::string, std::string> BossNameToRoomId = {
+        {"Vepar", "m01SIP_022"},        {"Clockwork", "m05SAN_012"}, {"Andrealphus", "m07LIB_011"},
+        {"Twin Dragons", "m08TWR_019"}, {"Bloodless", "m05SAN_023"}, {"Train", "m09TRN_002"},
+        {"Gremory", "m18ICE_018"},
+    };
+
+    // Bosses that softlock need a map to the next room
+    const std::unordered_map<std::string, std::string> BossRoomIdToNextRoom = {
+        {"m01SIP_022", "m02VIL_000"},
+        {"m09TRN_002", "m09TRN_003"},
+    };
+
     std::unordered_map<std::string, std::string> DisplayNameToItemId;
 };

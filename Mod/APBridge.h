@@ -14,7 +14,8 @@ class APBridge {
     static APBridge& Instance();
 
     // Enqueue actions from UI
-    void EnqueueConnect(const std::string& slotName, const std::string& password, const std::string& uri = "");
+    void EnqueueConnect(const std::string& slotName, const std::string& password, const std::string& uri = "",
+                        const bool& wantsDeathlink = false);
     void EnqueueDisconnect();
     void EnqueueSync();
 
@@ -32,6 +33,7 @@ class APBridge {
         std::string slotName;
         std::string password;
         std::string uri;
+        bool wantsDeathlink;
     };
 
     std::deque<Command> queue_;

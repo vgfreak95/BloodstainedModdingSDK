@@ -3,6 +3,7 @@
 
 #include <PB_Chr_PlayerRoot_classes.hpp>
 #include <Step_P0000_classes.hpp>
+#include <iterator>
 
 #include "APBridge.h"
 #include "Archipelago.h"
@@ -26,6 +27,7 @@ static UnlimitedConMod unlimitedConMod;
 static UnlimitedMindMod unlimitedMindMod;
 static UnlimitedIntMod unlimitedIntMod;
 static UnlimitedSpeedMod unlimitedSpeedMod;
+static ExpModifierMod expModifierMod;
 
 #ifdef _DEBUG
 static char s_Host[256] = "localhost";
@@ -33,6 +35,7 @@ static char s_Port[256] = "38281";
 static char s_SlotName[256] = "VGFreak";
 static char s_Password[256] = "";
 static char s_Console[256] = "Knife";
+static char s_TeleportField[256] = "";
 #else
 static char s_Host[256] = "archipelago.gg";
 static char s_Port[256] = "";
@@ -42,6 +45,7 @@ static char s_Console[256] = "";
 #endif
 
 static bool s_Connected = false;
+static bool s_wantsDeathlink = false;
 
 static void RenderArchipelagoPanel() {
     ImGui::SeparatorText("Archipelago");
@@ -71,6 +75,8 @@ static void RenderArchipelagoPanel() {
         ImGui::SetNextItemWidth(256);
         ImGui::InputText("##Password", s_Password, IM_ARRAYSIZE(s_Password), ImGuiInputTextFlags_Password);
 
+        ImGui::Checkbox("DeathLink", &s_wantsDeathlink);
+
         if (ImGui::Button("Connect")) {
             std::string uri = "";
             if (strcmp(s_Host, "localhost") == 0 || strcmp(s_Host, "127.0.0.1") == 0) {
@@ -81,7 +87,7 @@ static void RenderArchipelagoPanel() {
 
             if (s_SlotName[0] != '\0') {
                 Logger::Log("Tried to connect to AP");
-                APBridge::Instance().EnqueueConnect(s_SlotName, s_Password, uri);
+                APBridge::Instance().EnqueueConnect(s_SlotName, s_Password, uri, s_wantsDeathlink);
             } else {
                 Logger::Log("Cannot connect to Archipelago with empty slotName");
             }
@@ -122,6 +128,7 @@ static void RenderArchipelagoPanel() {
 }
 
 static void RenderDebugInfoPanel() {
+    #ifdef DEBUG
     ImGui::SeparatorText("DebugInfo");
     if (GameManager::Instance().IsPlayerLoadedInGame()) {
         auto instance = reinterpret_cast<SDK::UPBGameInstance*>(GameManager::Instance().GameInstance());
@@ -130,22 +137,49 @@ static void RenderDebugInfoPanel() {
         auto text = "Current Room Id: " + roomId;
         ImGui::Text(text.c_str());
 
+        // SDK::APBWarpManager* wm = instance->GetWarpManager();
         auto text2 = "Treasurebox name: " + SDK::APBBronzeTreasureBox_BP_C::StaticClass()->GetName();
         ImGui::Text(text2.c_str());
 
-        if (ImGui::Button("Teleport")) {
-            std::string start = "m01SIP_000";
-            // std::wstring warpRoomName = L"m09TRN_003";
-            // auto warpName = SDK::UKismetStringLibrary::Conv_StringToName(warpRoomName.c_str());
+        ImGui::Text("TeleportToRoomId");
+        ImGui::SameLine();
+        ImGui::SetNextItemWidth(256);
+        ImGui::InputText("##TeleportToRoomId", s_TeleportField, IM_ARRAYSIZE(s_TeleportField));
 
-            std::string none = "None";
-            auto startName = FNameFromString(start);
-            auto noneName = FNameFromString(none);
+        // const char* items[] = {"50", "100", "500", "1000", "2000"};
+        // const char* items[] = GameManager::Instance().GetBossNames();
+
+        static int tpIndex = 0;
+        const auto& names = GameManager::Instance().GetBossNames();
+        std::vector<std::string> items(names.begin(), names.end());
+
+        if (ImGui::BeginCombo("##label", items[tpIndex].c_str())) {
+            for (int i = 0; i < items.size(); i++) {
+                bool isSelected = (tpIndex == i);
+                if (ImGui::Selectable(items[i].c_str(), isSelected)) tpIndex = i;
+                if (isSelected) ImGui::SetItemDefaultFocus();
+            }
+            ImGui::EndCombo();
+        }
+
+        if (ImGui::Button("Teleport")) {
+            std::string tpDestination;
+            std::string tpField = s_TeleportField;
+            if (tpField.empty()) {
+                tpDestination = GameManager::Instance().GetBossRoomIdFromBossName(items[tpIndex]);
+            } else {
+                tpDestination = s_TeleportField;
+            }
+
+            auto tpDestinationName = FNameFromString(tpDestination);
             auto instance = (SDK::UPBGameInstance*)GameManager::Instance().GameInstance();
-            ThreadQueue::Instance().Enqueue([startName, noneName, instance]() {
-                Logger::Log("Warping player");
-                instance->pRoomManager->Warp(startName, false, false, noneName, {0, 0, 0, 0});
-            });
+            // ThreadQueue::Instance().Enqueue([startName, instance, manager]() {
+            SDK::FLinearColor blackFade = {0.0f, 0.0f, 0.0f, 1.0f};  // Black fade
+            Logger::Log("Warping player");
+            auto roomName = manager->GetCurrentRoomId();
+            Logger::Log(roomName.ToString());
+            instance->pRoomManager->Warp(tpDestinationName, true, true, roomName, blackFade);
+            //});
         }
 
         if (ImGui::Button("Kill Player")) {
@@ -154,6 +188,7 @@ static void RenderDebugInfoPanel() {
         }
     }
     ImGui::Spacing();
+    #endif
 }
 
 Gui& Gui::Instance() {
@@ -268,6 +303,7 @@ void Gui::Render() {
                     unlimitedIntMod.Init("Unlimited Intelligence");
                     unlimitedMindMod.Init("Unlimited Mind");
                     unlimitedSpeedMod.Init("Unlimited Speed");
+                    expModifierMod.Init("Exp Modifier");
 
                     const char* items[] = {"50", "100", "500", "1000", "2000"};
                     static int selectedIndex = 0;

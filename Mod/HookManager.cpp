@@ -7,6 +7,7 @@
 #include <PB_Chr_Root_classes.hpp>
 #include <ProjectBlood_structs.hpp>
 #include <Step_P0000_classes.hpp>
+#include <TutorialShardWindow_classes.hpp>
 #include <UMG_classes.hpp>
 #include <UnrealContainers.hpp>
 
@@ -18,6 +19,7 @@
 #include "Mod/Archipelago.h"
 #include "ProjectBlood_classes.hpp"
 #include "SDK.hpp"
+#include "Utils.h"
 
 std::set<std::string> HookManager::pendingWidgets;
 std::set<std::string> HookManager::processedWidgets;
@@ -78,17 +80,49 @@ bool HookManager::Init() {
 }
 
 bool HookManager::PostInit() {
+    // When enemy dies, might use in future
+    // NotifyOnMatchingClass("Chr_N", [](void* obj, std::string func) {
+    //     if (func == "Kill") {
+    //         Logger::Log("Enemy killed");
+    //     }
+    // });
+
+    // Whens constantly when the player is alive
+    NotifyOnClassFunction("Chr_P0000_C", "GetAdditionalCameraTargetLocations", [](void* obj) {
+        if (!Archipelago::ConnectedInstance()) return;
+        if (!Archipelago::ConnectedInstance()->IsPendingDeathlink()) return;
+
+        Logger::Log("Pending death link is true");
+        // is pending death link is true
+        if (GameManager::Instance().CanKillPlayer() && !GameManager::Instance().IsPlayerDead()) {
+            Logger::Log("Killing player from deathlink");
+            GameManager::Instance().KillPlayer();
+            Logger::Log("Killed player");
+        }
+    });
+
     // When player dies
     NotifyOnClassFunction("Chr_P0000_C", "Kill", [](void* obj) {
+        Logger::Log("Player died");
         GameManager::Instance().PlayerDied();
         sentLocationChecks.clear();
-        Logger::Log("Player died");
+        Logger::Log("Pending death link", Archipelago::ConnectedInstance()->IsPendingDeathlink());
+        // pending death is true
+        if (!Archipelago::ConnectedInstance()->IsPendingDeathlink()) {
+            Logger::Log("Sent out death link");
+            Archipelago::ConnectedInstance()->InvokeDeathLink();  // send out death link
+        } else {
+            Archipelago::ConnectedInstance()->ResetDeathLink();
+            Logger::Log("Resetting death link");
+        }
+        Logger::Log("End of player died");
     });
 
     // When player returns to title screen
     // IMPORTANT: Also when player dies and loading screen occurs, the title gets created for whatever reason
     NotifyOnClassFunction("PBTitlePlayerController_C", "ClientRestart", [](void* obj) {
-        if (!GameManager::Instance().IsPlayerDead()) {
+        if (!GameManager::Instance().IsPlayerDead() && Archipelago::Instance().IsConnected()) {
+            Archipelago::Instance().ResetRecievedStartingInventory();
             Archipelago::ConnectedInstance()->ResetLocalIndex();
             APBridge::Instance().EnqueueDisconnect();
             sentLocationChecks.clear();
@@ -111,6 +145,7 @@ bool HookManager::PostInit() {
     NotifyOnClassFunction("PBGameInstanceBP_C", "OnSaveStoryDataCompletedDelegates_Event_0", [](void* obj) {
         Logger::Log("Player saved game");
         Archipelago::ConnectedInstance()->UpdateServerLastIndex();
+        Archipelago::ConnectedInstance()->LockStartingInventory();
         sentLocationChecks.clear();
     });
 
@@ -121,13 +156,19 @@ bool HookManager::PostInit() {
         auto shardBase = reinterpret_cast<SDK::AShardBase*>(obj);
         auto instance = GameManager::Instance;
         auto roomManager = instance().RoomManager();
+        auto inventory = instance().Player()->CharacterInventory;
         auto roomId = roomManager->GetCurrentRoomId().ToString();
 
-        // Don't allow in tutorial room because softlock :/
-        if (roomId != "m01SIP_000" && !instance().RoomIsBossRoom(roomId)) {
-            instance().GivePlayerItem(shardBase->ShardId.ToString());
-            ((SDK::AActor*)(shardBase))->K2_DestroyActor();
-        }
+        auto shardId = shardBase->ShardId;
+        instance().GivePlayerItem(shardId.ToString(), false, 0);
+        Logger::Log("[Shard] Sending location check:", shardId.ToString());
+        Archipelago::ConnectedInstance()->SendLocationChecks(shardId.ToString());
+
+        // SDK::FPBItemCatalogData itemData = SDK::FPBItemCatalogData();
+        // inventory->GetItemDataById(shardId, &itemData);
+        // instance().SendInGameNotification(itemData.ID.ToString(), 874);
+        ((SDK::AActor*)(shardBase))->K2_DestroyActor();
+        if (instance().RoomIsBossRoom(roomId)) instance().CheckBossSoftlock();
     });
 
     // When the item popup in bottom right corner appears
@@ -135,14 +176,13 @@ bool HookManager::PostInit() {
         auto* popup = static_cast<SDK::UItemGetPopup_C*>(obj);
         std::string popupText = popup->MLTF_SIZE_23_ItemName->text.ToString();
 
-        if (!popupText.starts_with("AP_")) return;
 
-        std::string locationId = popupText.substr(3);
-        if (sentLocationChecks.count(locationId)) return;
+		if (!popupText.starts_with("AP_")) return;
+        if (sentLocationChecks.count(popupText)) return;
 
-        sentLocationChecks.insert(locationId);
-        Archipelago::ConnectedInstance()->SendLocationChecks(locationId);
-        Logger::Log("[ItemGetPopup] Sending location check:", locationId);
+        sentLocationChecks.insert(popupText);
+        Archipelago::ConnectedInstance()->SendLocationChecks(popupText);
+        Logger::Log("[ItemGetPopup] Sending location check:", popupText);
     });
 
     Logger::Log("HookManager post initialized successfully");

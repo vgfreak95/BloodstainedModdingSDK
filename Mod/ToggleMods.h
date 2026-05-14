@@ -54,3 +54,12 @@ class UnlimitedSpeedMod : public IToggleMod {
    private:
     float originalValue;
 };
+
+class ExpModifierMod : public IToggleMod {
+   public:
+    void OnActivated() override;
+    void OnDeactivated() override;
+
+   private:
+    float originalValue;
+};

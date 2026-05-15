@@ -24,3 +24,7 @@ SDK::FName FNameFromString(const std::string& str) {
     std::wstring wideName = Utf8ToWide(str);
     return SDK::UKismetStringLibrary::Conv_StringToName(wideName.c_str());
 }
+
+bool isEqual(double a, double b) {
+    return fabs(a - b) < std::numeric_limits<double>::epsilon() * fmax(fabs(a), fabs(b));
+}

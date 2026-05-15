@@ -88,3 +88,16 @@ void UnlimitedSpeedMod::OnDeactivated() {
     player->CharacterInventory->SetSpecialAttribute(SDK::EPBEquipSpecialAttribute::NormalMoveUpRate, originalValue);
     Logger::Log("UnlimitedSpeedMod Deactivated!");
 }
+
+void ExpModifierMod::OnActivated() {
+    auto player = GameManager::Instance().Player();
+    originalValue = player->CharacterInventory->GetSpecialAttribute(SDK::EPBEquipSpecialAttribute::GainExpRate);
+    player->CharacterInventory->SetSpecialAttribute(SDK::EPBEquipSpecialAttribute::GainExpRate, 2.0f);
+    Logger::Log("ExpModifierMod Activated");
+}
+
+void ExpModifierMod::OnDeactivated() {
+    auto player = GameManager::Instance().Player();
+    player->CharacterInventory->SetSpecialAttribute(SDK::EPBEquipSpecialAttribute::GainExpRate, originalValue);
+    Logger::Log("ExpModifierMod Deactivated!");
+}

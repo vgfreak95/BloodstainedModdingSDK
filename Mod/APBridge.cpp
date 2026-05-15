@@ -14,9 +14,10 @@ APBridge& APBridge::Instance() {
 
 APBridge::APBridge() {}
 
-void APBridge::EnqueueConnect(const std::string& slotName, const std::string& password, const std::string& uri) {
+void APBridge::EnqueueConnect(const std::string& slotName, const std::string& password, const std::string& uri,
+                              const bool& wantsDeathlink) {
     std::lock_guard<std::mutex> lock(mutex_);
-    queue_.push_back(Command{Command::Connect, slotName, password, uri});
+    queue_.push_back(Command{Command::Connect, slotName, password, uri, wantsDeathlink});
 }
 
 void APBridge::EnqueueDisconnect() {
@@ -39,7 +40,7 @@ void APBridge::ProcessPending() {
     for (const auto& cmd : local) {
         switch (cmd.type) {
             case Command::Connect:
-                Archipelago::Instance().Connect(cmd.slotName, cmd.password, cmd.uri);
+                Archipelago::Instance().Connect(cmd.slotName, cmd.password, cmd.uri, cmd.wantsDeathlink);
                 break;
             case Command::Disconnect:
                 Archipelago::Instance().Disconnect();

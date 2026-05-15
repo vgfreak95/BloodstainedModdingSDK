@@ -128,7 +128,7 @@ static void RenderArchipelagoPanel() {
 }
 
 static void RenderDebugInfoPanel() {
-    #ifdef DEBUG
+    #ifdef _DEBUG
     ImGui::SeparatorText("DebugInfo");
     if (GameManager::Instance().IsPlayerLoadedInGame()) {
         auto instance = reinterpret_cast<SDK::UPBGameInstance*>(GameManager::Instance().GameInstance());

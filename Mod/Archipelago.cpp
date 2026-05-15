@@ -88,7 +88,6 @@ void Archipelago::SendLocationChecks(const std::string& locationId) {
 
     std::vector<int64_t> locations;
 
-
     if (!locationId.starts_with("AP_")) return;
     std::string locationWithoutPrefix = locationId.substr(3);
 
@@ -409,8 +408,8 @@ bool Archipelago::Connect(const std::string& slotName, const std::string& passwo
             GameManager::Instance().GivePlayerStatusMultiplier(SDK::EPBEquipSpecialAttribute::DropShardRate, value);
         }
 
-        if (slotData.contains("shard_drop_initial_grade") && !slotData["shard_drop_initial_grade"].is_null()) {
-            shardDropInitialGrade_ = slotData.at("shard_drop_initial_grade").get<int64_t>();
+        if (slotData.contains("drop_shard_initial_grade") && !slotData["drop_shard_initial_grade"].is_null()) {
+            shardDropInitialGrade_ = slotData.at("drop_shard_initial_grade").get<int64_t>();
         }
 
         if (slotData.contains("start_inventory") && !slotData.at("start_inventory").is_null()) {

@@ -105,18 +105,20 @@ class GameManager {
     bool postInitCompleted;
     bool isPlayerDead = false;
 
-    const std::unordered_set<std::string> bossRooms = {
-        "m01SIP_000", "m01SIP_022", "m09TRN_002", "m07LIB_011", "m08TWR_019", "m05SAN_023", "m18ICE_018", "m05SAN_012",
+    // m17RVA_008
+    const std::unordered_set<std::string> bossRooms = {"m01SIP_000", "m01SIP_022", "m09TRN_002",
+                                                       "m07LIB_011", "m08TWR_019", "m05SAN_023",
+                                                       "m18ICE_018", "m05SAN_012", "m17RVA_008"
     };
 
-    const std::unordered_set<std::string> bossNames = {
-        "Vepar", "Clockwork", "Andrealphus", "Twin Dragons", "Bloodless", "Train", "Gremory",
+    const std::unordered_set<std::string> bossNames = {"Vepar",     "Craftwork", "Andrealphus", "Twin Dragons",
+                                                       "Bloodless", "Train",     "Gremory",     "Orobas"
     };
 
     const std::unordered_map<std::string, std::string> BossNameToRoomId = {
-        {"Vepar", "m01SIP_022"},        {"Clockwork", "m05SAN_012"}, {"Andrealphus", "m07LIB_011"},
+        {"Vepar", "m01SIP_022"},        {"Craftwork", "m05SAN_012"}, {"Andrealphus", "m07LIB_011"},
         {"Twin Dragons", "m08TWR_019"}, {"Bloodless", "m05SAN_023"}, {"Train", "m09TRN_002"},
-        {"Gremory", "m18ICE_018"},
+        {"Gremory", "m18ICE_018"},     {"Orobas", "m17RVA_008"}
     };
 
     // Bosses that softlock need a map to the next room

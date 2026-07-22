@@ -76,7 +76,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <BSGamePath>C:\SteamLibrary\steamapps\common\Bloodstained Ritual of the Night\BloodstainedRotN\Binaries\Win64</BSGamePath>
-    <TargetName>version</TargetName>
+    <TargetName>BloodstainedAP</TargetName>
     <ExternalIncludePath>CppSDK;CppSDK/SDK;subprojects;$(ExternalIncludePath)</ExternalIncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -131,7 +131,9 @@
       <AdditionalDependencies>vcpkg_installed\x64-windows-static-md\lib\libcrypto.lib;vcpkg_installed\x64-windows-static-md\lib\libssl.lib;vcpkg_installed\x64-windows-static-md\lib\zlib.lib;crypt32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /Y /F "$(TargetPath)" "$(BSGamePath)\"</Command>
+      <Command>xcopy /Y /F "$(TargetPath)" "$(BSGamePath)\plugins"
+ren "$(BSGamePath)\plugins\BloodstainedAP.dll" BloodstainedAP.asi
+</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

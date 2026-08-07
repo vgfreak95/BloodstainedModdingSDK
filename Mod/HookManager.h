@@ -46,8 +46,6 @@ class HookManager {
     }
 
     static bool playerDetected;
-    static void ApplyCompatibilityShardMasterData();
-    static void ResetCompatibilityShardMasterData();
 
    private:
     HookManager() = default;

@@ -12,9 +12,9 @@
 #include <set>
 
 #include "GameManager.h"
-#include "HookManager.h"
 #include "Logger.h"
 #include "ThreadQueue.h"
+#include "ShardCompat.h"
 #include "Utils.h"
 #include "apclient.hpp"
 #include "apuuid.hpp"
@@ -413,7 +413,7 @@ bool Archipelago::Connect(const std::string& slotName, const std::string& passwo
     lastReceivedItemIndex_ = -1;
     lastQueuedItemIndex_ = -1;
     pendingReceivedItems_.clear();
-    HookManager::ResetCompatibilityShardMasterData();
+    ResetCompatibilityShardMasterData();
 
     Logger::Log(LogLevel::Debug, "[AP]", "Connecting Player: ", slotName_, "with uri: ", normalizedUri);
     UpdateState(ArchipelagoConnectionState::Connecting);
@@ -464,7 +464,7 @@ bool Archipelago::Connect(const std::string& slotName, const std::string& passwo
         Logger::Log("[AP] Data package loaded for game: ", GAME_NAME);
         ProcessReceivedItems();
         SendMissingClearedLocations();
-        HookManager::ApplyCompatibilityShardMasterData();
+        ApplyCompatibilityShardMasterData();
     });
 
     ap->set_slot_connected_handler([this](const json& slotData) {
@@ -477,7 +477,7 @@ bool Archipelago::Connect(const std::string& slotName, const std::string& passwo
         LoadLocalProgress();
         UpdateState(ArchipelagoConnectionState::SlotConnected);
         SendMissingClearedLocations();
-        HookManager::ApplyCompatibilityShardMasterData();
+        ApplyCompatibilityShardMasterData();
         SaveConnectionInfo();
 
         if (slotData.contains("drop_experience_multiplier") && !slotData.at("drop_experience_multiplier").is_null()) {
@@ -520,7 +520,7 @@ bool Archipelago::Connect(const std::string& slotName, const std::string& passwo
 
     ap->set_slot_disconnected_handler([this]() {
         Logger::Log(LogLevel::Debug, "[AP]", "Player: ", slotName_, "disconnected");
-        HookManager::ResetCompatibilityShardMasterData();
+        ResetCompatibilityShardMasterData();
         UpdateState(ArchipelagoConnectionState::Disconnected);
         ap_slot_connect_sent = false;
     });
@@ -566,7 +566,7 @@ bool Archipelago::Connect(const std::string& slotName, const std::string& passwo
 void Archipelago::AbortPassword() { awaiting_password = false; }
 
 void Archipelago::Disconnect() {
-    HookManager::ResetCompatibilityShardMasterData();
+    ResetCompatibilityShardMasterData();
     UpdateState(ArchipelagoConnectionState::Disconnected);
     ap.reset();
     ap_slot_connect_sent = false;

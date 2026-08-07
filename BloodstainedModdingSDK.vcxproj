@@ -227,6 +227,7 @@ xcopy /Y /F "$(TargetPath)/../BloodstainedAP.asi" "$(BSGamePath)\plugins"
     <ClInclude Include="Mod\Logger.h" />
     <ClInclude Include="Mod\ModRunner.h" />
     <ClInclude Include="Mod\NotifyObject.h" />
+    <ClInclude Include="Mod\ShardCompat.h" />
     <ClInclude Include="Mod\ToggleMods.h" />
     <ClInclude Include="Mod\Utils.h" />
     <ClInclude Include="version\version.h" />

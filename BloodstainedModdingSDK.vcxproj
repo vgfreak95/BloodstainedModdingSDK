@@ -131,8 +131,8 @@
       <AdditionalDependencies>vcpkg_installed\x64-windows-static-md\lib\libcrypto.lib;vcpkg_installed\x64-windows-static-md\lib\libssl.lib;vcpkg_installed\x64-windows-static-md\lib\zlib.lib;crypt32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /Y /F "$(TargetPath)" "$(BSGamePath)\plugins"
-ren "$(BSGamePath)\plugins\BloodstainedAP.dll" BloodstainedAP.asi
+      <Command>ren "$(TargetPath)" BloodstainedAP.asi
+xcopy /Y /F "$(TargetPath)/../BloodstainedAP.asi" "$(BSGamePath)\plugins"
 </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
